@@ -369,7 +369,11 @@ A profit loss model will be built using the breakeven point of 24.13% and fixed 
 
 4.2  We will look at the results of the previous analyses within the context of this model to give an estimate of the actual profit or loss given by variables noted in 4.1 and the product response confidence interval from SA2.
 
+
+
 4.3  For respondents that indicate they would buy the USB Toaster we will determine the price range that was suitable for this population.  While the price is proprietary, this knowledge may inform the client as to whether or not the current estimated fixed price is appropriate or whether it might be increased.
+
+
 
 4.4  Finally, we will look at variations in the model based on increasing the price of the USB Toaster in terms of the specified variables above.  Note, since these values are proprietary, the results of these analyses will be in terms of the variables and dollars.  The client may then use these calculations to determine the actual dollar profit or loss by entering different values of the variables (where appropriate into the equation).
 
@@ -378,4 +382,9 @@ A profit loss model will be built using the breakeven point of 24.13% and fixed 
 ```
 
 
-
+##Notes:  1) segment age and balance to make into ordinal factors
+          2) re-run logistic regression
+          3) make contact a binary (known/unknown) and perform logistic     
+          regression to see what causes/correlates unknown contact.
+          4) maybe look at the prediction for an individual with no debt, no house, single,
+          young, tertiary education, etc - ie., perfect buyer - and see prob they will buy.
