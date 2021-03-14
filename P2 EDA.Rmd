@@ -53,6 +53,11 @@ plot(P2$age,P2$balance )
 ## 1.1 
 Product Response will be considered as the response variable where “yes” means an individual indicated that they would purchase the USB Toaster and “no” indicated they would not.  Common variables between the two datasets are: age, marital status, profession, education level, whether an individual has a mortgage or not, whether an individual has a personal loan other than a mortgage, the balance of any non-mortgage personal loan, and primary phone (cell or telephone).  Additionally, whether an individual is 60 days delinquent or in credit default may also be comparable between datasets. 
 
+Deleting binary variable on whether someone has a personal loan for two reasons:
+1) we can get this info based on the balance
+2) balance and loan don't agree.  Balance is probably the more useful (maybe true).
+I figured this out MUCH later, so we might not have it here.  It makes sense to put in above area where we examine univariate/bivariate data.
+
 ## 1.2  
 Common variables between the two datasets will be compared to determine whether they represent the same population.  We will use proportion tests that compare the percentages of certain types of demographic data and the total number of respondents for the dataset to determine if the datasets represent the same population or populations that are fundamentally different.
 ```{r}
@@ -175,9 +180,9 @@ mean(P2$y.n) + qt(0.975, 45210) * x.std.error
 
 
 #calcLikelihoodForProportion <- function(successes, total)
-  {
-     curve(dbinom(successes,total,x)) # plot the likelihood
-}
+ # {
+    # curve(dbinom(successes,total,x)) # plot the likelihood
+#}
 #calcLikelihoodForProportion(5289, 45211)
 
 #credible interval
@@ -256,43 +261,57 @@ test <- P2[-train_ind, ] #test
 
 summary(train)
 m0<-glm(y.n~1, family=binomial, train)
-m1<-glm(y.n~.-y-price, family=binomial, train) #removed price because it is only off interest later.
+m1<-glm(y.n~.-y-price-loan-balance, family=binomial, train) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
 #(also the model didn't converge with price)
 sumary(m1)
 # LRT for null vs full - null hypothesis is null is good 
 pchisq(deviance(m0)-deviance(m1),df.residual(m0)-df.residual(m1),lower=FALSE) #full is better
 # G^2 goodness of fit - null is model fits
-pchisq(deviance(m1),df.residual(m1),lower=FALSE) #no evidence to reject null
+pchisq(deviance(m1),df.residual(m1),lower=FALSE) #no evidence to reject null that it is good fit
 drop1(m1, test="Chi") #full model is best by AIC and deviance
 
 
-m2<-glm(y.n~I(age^.17)+I(balance2^(-.15))+job+marital+education+default+housing+loan+contact, family=binomial, train) #removed price because it is only off interest later.
+m2<-glm(y.n~I(age^.17)+I(balance2^(-.15))+job+marital+education+default+housing+contact, family=binomial, train) #removed price because it is only off interest later.
 sumary(m2)  #AIC indicates slightly better fit with tranformations.
-drop1(m2, test="Chi") #age and default are not significant predictors in this model.
+drop1(m2, test="Chi") #age is not a significant predictors in this model.
 
-m3<-glm(y.n~I(balance2^(-.15))+job+marital+education+housing+loan+contact, family=binomial, train) 
-summary(m3) #AIC is slightly improved
+m3<-glm(y.n~I(balance2^(-.15))+job+marital+education+housing+contact+default, family=binomial, train) 
+summary(train$job)
+sumary(m3) #AIC is slightly improved
 drop1(m3, test="Chi") # m3 seems to be the best model
+pchisq(deviance(m0)-deviance(m3),df.residual(m0)-df.residual(m3),lower=FALSE) #full is better
+# G^2 goodness of fit - null is model fits
+pchisq(deviance(m3),df.residual(m3),lower=FALSE) #no evidence to reject null that it is good fit
 ```
-Full model is best and it fits very well.
+Model m3 is best (LRT based on deviance) and it fits very well according to G^2 test.
+Notes: as balance increases, purchasing becomes more likely. Most likely job to buy is student, followed by retired, then unemployed (much lower) and admin finally.
+Single most likely, with divorced next.  Tertiary education is best demographic, followed by unknown, and secondary.  no mortgage is best, contact cell is best - unknown is very bad, default unknown and no are similar (best).  Overall, we can see that strongest influences are detailed by coefficient above (note balance is different since it is a negative exponential).
+
 
 3.2  Diagnostic analysis will be performed to check the assumptions of the logistic model using residual plots, halfnorm plots and other relevant tests. Potential outliers or influential points will be examined with caution.
 
+
+# we might want to run these with a subsample to make them more visible.  Too many observations to see well here.  Maybe try with 500 randomly drawn?
 ```{r}
 library(alr4)
 library(faraway)
 halfnorm(residuals(m3)) #looks okay for a binomial, no big outliers
+plot(residuals(m3)) #these look pretty reasonable as far as we can tell
+#residualPlots(m3)
+influencePlot(m3)  #console info is better here perhaps.  We can see that nothing is too crazy here.
+influenceIndexPlot(m3) # can't read these, too many.
 ```
+For the most part, I think these look okay.
 
 
 3.3 Tests will be conducted to see the accuracy of the model (correct classification rate) with respect to correctly identifying whether an individual will or will not purchase the product based on the other variables in the model using the test set (the data not used in the training set).
 
 ```{r}
-train<-mutate(train, p.hat=predict(m1, type="response"), eta=predict(m3))
+train<-mutate(train, p.hat=predict(m3, type="response"), eta=predict(m3))
 train <- mutate(train, predout=ifelse(p.hat < 0.5, "no", "yes"))
 xtabs( ~ y + predout, train)
 #correct spec rate for training 88.2%, but basically by saying no every time (1-0.117=0.883...)
-(2+19935)/nrow(train)
+(19940)/nrow(train)
 
 thresh <- seq(0.01, 0.3, by = 0.01)
 Class.rate <- numeric(length(thresh))
@@ -310,11 +329,11 @@ matplot(thresh,cbind(Sensitivity,Specificity),type="l",xlab="Threshold",ylab="Pr
 plot(1-Specificity,Sensitivity,type="l")
 abline(0,1,lty=2)
 ```
-Not great at predicting...Specificity is good, sensitivity is terrible. So we know some things that make people more likely to buy, but don't have a great model.  Perhaps contingency tables will be better....we could still see how it performs on the test set or just use the full set above.  (Good verbage borrowed/altered from a text: Almost no cases are classified as "yes" because the probability of "no" almost always dominates the outcome. so the performance is not what we would like, but not surprising given the large proportion of "no" in each category.  Perhaps what is most notable is looking at the individuals predicted as "yes" for product response.)
+Not great at predicting...Specificity is good (red - % of time correctly classifying "no"), sensitivity is terrible (black - % of time correctly classifying "yes"). So we know some things that make people more likely to buy, but don't have a great model.  Perhaps contingency tables will be better....we could still see how it performs on the test set or just use the full set above.  (Good verbiage borrowed/altered from a text: Almost no cases are classified as "yes" because the probability of "no" always dominates the outcome. so the performance is not what we would like, but not surprising given the large proportion of "no" in each category.)
 
 
 ## 3.4  
-Contingency tables will also be constructed to determine if particular combinations of variables are especially lucrative possibilities or potentially poor demographics for sales.  While binomial regression (two end values, yes and no) will give us odds changes based on variable changes, contingency tables can give us strong insight into the relationship between predictive variables that could help in mirco-targeting potential buyers (more below)..
+Contingency tables will also be constructed to determine if particular combinations of variables are especially lucrative possibilities or potentially poor demographics for sales.  While binomial regression (two end values, yes and no) will give us odds changes based on variable changes, contingency tables can give us strong insight into the relationship between predictive variables that could help in mirco-targeting potential buyers (more below).
 
 ```{r}
 ct.stuff<-function(fact1, fact2, data){
@@ -322,7 +341,8 @@ ct.stuff<-function(fact1, fact2, data){
 (ct2 = xtabs( ~ fact1 + fact2, data))
 ct/ct2
 }
-
+summary(P2)
+table(P2$education)
 ct.stuff(P2$education, P2$job, P2) #shows percentage yes for cross section.  We see students say yes much more frequently overall.  Over 24.13%...only place we see this - basically college or grad students
 #retired also approaches critical, and is over for tertiary
 #unemployed tertiary also decent at 19%
@@ -333,8 +353,6 @@ ct.stuff(P2$education, P2$default, P2)  #tertiary better, but not great.
 
 ct.stuff(P2$education, P2$housing, P2)  #tertiary and no house @ 20%
 
-ct.stuff(P2$education, P2$loan, P2)  #tertiary again, but not with a loan
-
 ct.stuff(P2$education, P2$contact, P2)  #tertiary again performing well.
 
 ct.stuff(P2$job, P2$marital, P2) #retired but not single, students not divorced- especially single, single and unemployed
@@ -343,8 +361,6 @@ ct.stuff(P2$job, P2$default, P2) #students unless in default, similar to retired
 
 ct.stuff(P2$job, P2$housing, P2) #retired non-home-owner, student non-homeowner, and unemployed non-homeowner
 
-ct.stuff(P2$job, P2$loan, P2) #students without loans, retired without loans
-
 ct.stuff(P2$job, P2$contact, P2)  #here's the caveat,  This weird group of unknown contacts
 #other than this, students and retirees still come out okay.
 
@@ -352,21 +368,14 @@ ct.stuff(P2$marital, P2$default, P2)  #single is better...but nothing special
 
 ct.stuff(P2$marital, P2$housing, P2)  #single non-homeowner, generally nonhomeowners are better
 
-ct.stuff(P2$marital, P2$loan, P2) #single with no loan, and strangely, unknown-unknown
-
 ct.stuff(P2$marital, P2$contact, P2) #single cell and divorced tele
 
 ct.stuff(P2$default, P2$housing, P2) # no housing, no default.  We are starting to get a clearer picture of a demo type here.
 # generally single, well-educated, students or retirees with no encumberance (financial or relationship).  Basically the picture of table 1.
-ct.stuff(P2$default, P2$loan, P2) #zippo here.
 
 ct.stuff(P2$default, P2$contact, P2) #cellular no default.  Again, unencumbered.
 
-ct.stuff(P2$housing, P2$loan, P2) # no housing-no loan, and unknown-unknown
-
 ct.stuff(P2$housing, P2$contact, P2) #non-homeowners - this product isn't about people on the go, it's about single people living in apartments.
-
-ct.stuff(P2$contact, P2$loan, P2) #cell and no loan is best.
 
 str(P2)
 ```
@@ -380,11 +389,49 @@ Done above.
 The final models of both methods described above will be interpreted to determine any useful demographic data that may be used to maximize profit by targeted marketing.  In the case of a probable loss in section SA2, this may allow for stronger profit potential based on focusing on the demographics identified in the models that are positively associated with intent to purchase.
 
 ```{r}
-sumary(m3)  #we see student/retired, tertiary, divorced/single, no house, no loan
+sumary(m3)  #we see student/retired, tertiary, divorced/single, no house
 #we can interpret these, but I don't think it is necessary
 #these are all in line with the cts
 # we can use the general direction and size from logistic regression, but with specific % from cts to discuss
+#Unfortunately for the client, student + retired is less than 3k of a 45K+ sample and this may be the limiting factor. (roughly 13K have tertiary, over 17k single/divorced, over 24.5k no housing)
 ```
+Let's look at a model composed only of students and retirees...
+```{r}
+Prime<-subset(P2, job=="student"|job=="retired", select = c(balance2,job,marital,education,housing,contact,default, y, price, y.n))
+summary(Prime)
+732/2254 #yes rate is good
+ct= xtabs( ~ y + job, Prime)
+ct
+476/2110 #retiree purchase rate - still not good enough
+256/(256+620)#student purchase rate - much better
+
+#So...student only model
+Prime<-subset(P2, job=="student", select = c(balance2,marital,education,housing,contact,default, y, price, y.n))
+summary(Prime)
+256/(256+620) #student purchase rate 41.3%  not TOO far from sample 1...could be explained by the skew towards men in sample 1, meaning that their numbers were possibly accurate for the pop they surveyed.
+
+#let's rerun the bayseian stuff now...
+#plotting the prior, likelihood and posterior
+calcPosteriorForProportion(256, 256+620, 212, 209)
+#posterior mean at 36% if we use their sample - probably shouldn't because it looks like gender has an influence.
+
+#credible interval
+qbeta(c(0.025, 0.975),212+256, 209+876) # 95% of the time, we would expect the true mean would fall in this interval
+
+Prime<-subset(Prime, y.n==1, select = c( price))
+summary(Prime)
+P2.y<-subset(P2, y.n==1, select = c( price))
+{
+plot(density(Prime$price), col="red")
+lines(density(P2.y$price), col="blue", add=T)
+}
+
+mean(P2.y$price) #mean estimated price for total pop of yeses
+mean(Prime$price) # mean estimated price for student pop of yeses
+```
+So, it looks like we have a specific target market that this product *could* work for.  But the question is really if targeting colleges can achieve a high enough population to match the 5 major metros originally intended and will it change the costs (and effectively the breakeven point)?  This is something the client must answer, but IF they still want to move forward with the USB Toaster, we've given them a clear path where they could even have college logos on the outside of the toasters.
+
+We can also see that students who said they would buy the product expect to pay about $28 more than the population of yeses on the whole (yeses there were higher than no's as well).  So it could justify raising the sale price which *may* make achieving a profit more likely.
 
 
 # Specific Aim 4:  What does the data tell us in terms of potential profit or loss based on the outcome of the analysis?
@@ -409,10 +456,7 @@ A profit loss model will be built using the breakeven point of 24.13% and fixed 
 ```
 
 
-##Notes:  1) segment age and balance to make into ordinal factors
-          2) re-run logistic regression
+##Notes:  
           3) make contact a binary (known/unknown) and perform logistic     
           regression to see what causes/correlates unknown contact.
-          4) maybe look at the prediction for an individual with no debt, no house, single,
-          young, tertiary education, etc - i.e., perfect buyer - and see prob they will buy.  ALso, look at 7 yeses from glm model.
           5) finally, maybe look at a model with just students and retirees?  How many retirees and students are in the gen pop?  Are these both demos worth chasing?
