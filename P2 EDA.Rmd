@@ -32,17 +32,19 @@ summary(dat4)
 #still can't figure out why y is so strange on contact...
 ```
 
-Contact behaves strangely missing nearly 4 times as much data as the next variable, but being the only one for which the level of unknown was truly significantly different.  Based on knowing that unknown contact is very different from other values, we might infer that people that say "no" are more likely to also not tell us their mode of contact - probably not the reverse.  We might also guess that contact is among the last pieces of info asked and people may have tired of answering at this point.  Essentially, people that are more willing to answer all or most of the questions, are more likely to say yes...but this doesn't really seem to add up either.
+Contact behaves strangely missing nearly 4 times as much data as the next variable, but being the only one for which the level of unknown was truly significantly different.  Based on knowing that unknown contact is very different from other values, we might infer that people that say "no" are more likely to also not tell us their mode of contact - probably not the reverse.  We might also guess that contact is among the last pieces of info asked and people may have tired of answering at this point.  Essentially, people that are more willing to answer all or most of the questions, are more likely to say yes...but this doesn't really seem to add up either.  We may just need to say it is not understood, but there is a connection and it could be explored further in the future if the client is interested.
 
 # Univriate EDA and Bivariate EDA 
 ```{r}
+library(car)
 hist(P2$age) # not great
 hist(P2$balance) # not so good, seems like we have negatives coded on accident here.
-P2$balance2<-abs(P2$balance)+1
+P2$balance2<-abs(P2$balance)+1  #changing to absolute value
 #maybe transform there using box-cox
 bc = powerTransform(cbind(age, balance2) ~ 1, P2) #GS would not work here, maybe change to a factor...
 summary(bc)
 summary(P2)
+plot(P2$age,P2$balance )
 ```
 
 
@@ -54,6 +56,7 @@ Product Response will be considered as the response variable where “yes” mea
 ## 1.2  
 Common variables between the two datasets will be compared to determine whether they represent the same population.  We will use proportion tests that compare the percentages of certain types of demographic data and the total number of respondents for the dataset to determine if the datasets represent the same population or populations that are fundamentally different.
 ```{r}
+#changing all to factor and merging blanks and unknowns into a single factor.
 P2$job<-factor(sub("^$", "unknown", P2$job))
 P2$marital<-factor(sub("^$", "unknown", P2$marital))
 P2$education<-factor(sub("^$", "unknown", P2$education))
@@ -63,11 +66,9 @@ P2$loan<-factor(sub("^$", "unknown", P2$loan))
 P2$contact<-factor(sub("^$", "unknown", P2$contact))
 P2$y<-factor(P2$y)
 summary(P2)
-P2$job<-sub("^$", "unknown", P2$job)
-
 
 #prop.test to see if marital status is sig diff. in two pops.
-prop.test(x=c(421*0.14,9064), n=c(421, 45211),
+prop.test(x=c(421*0.14,26543), n=c(421, 45211),
           conf.level=0.95)
 #Very different
 
@@ -109,12 +110,34 @@ prop.test(x=c(421*0.36,29262), n=c(421, 45211),
           conf.level=0.95)
 #Very different
 ```
-Here we can talk about how these are different and why.  Their population somehow is in debt, college, men, who use cells phones less, and are fiscally irresponsible...even if they want to buy this product, they may not have the money to do so.
+Here we can talk about how these are different and why.  Their population somehow is in debt, college, men, who use cells phones less, and are fiscally irresponsible...even if they want to buy this product, they may not have the money to do so.  
+
+This gets to measure accuracy which we will talk about below in the psychometrics and other research (below)
 
 ## 1.3  
 Based on the results of the above analyses, we will determine how and some potential reasons why the dataset are different (if we find they are) using both statistical reasoning and potentially some psychometric theory and research.
 
-We can talk about my above notes here.  Sampling error skewing the population.  Also sources of error on psychological tests (intent to buy) time differences, personal variation, task not reflective of event.  More on this last one, research indicates surveys and focus groups aren't great barometers for purchasing.  A potential better metric will be discussed later.
+We can talk about my above notes here.  Sampling error skewing the population.  Also sources of error on psychological tests (intent to buy) time differences, personal variation, task not reflective of event.  More on this last one, research indicates surveys and focus groups aren't great barometers for purchasing.  A potential better metric will be discussed later, but we will move forward with the data we have.
+
+
+### (Rough Draft of some text below. This might be better as part of the conclusion and suggesting a different approach to future research in this area.)
+
+It has been noted that surveys asking if people will hypothetically buy a product with money they may not have, is not necessarily a good measure for intent to buy.  In researching the viability of this measure, our consulting team found a particular source of interest that specifically investigated durable homewares as part of its data.  According to research published in the Journal of the American Statistical Association by F. Thomas Juster, "consumer intentions to buy are inefficient predictors of purchase rates because they do not provide accurate estimates of mean purchase probability." (hyperlink: https://www.tandfonline.com/doi/abs/10.1080/01621459.1966.10480897) 
+
+The reasons for this may be rooted in the fact that measuring an intent to purchase is a psychological construct and these measures have commonly known sources of unreliability*, all of which apply in this context.  The three common sources of performance variation are:
+1) The person tested may change from one testing to the next
+2) The task measured and the behavior may be different
+3) The limited sample of the behavior results in an unstable and undependable score.
+
+While it is not the intent to delve deeply into psychometrics, a brief aside exploring the potential reliability of the product intent variable in the context of the research above might be fruitful for understanding the task at hand of examining the probability of product success.
+
+  In the article by Juster, the predominant source of error cited that made customer buying intentions problematic.  As Juster puts it, "intentions surveys cannot detect movements in mean probability among nonin- tenders, who account for the bulk of actual purchases and for most of the time-series variance in purchase rates." Meaning that though our data gives a "yes" or "no" response, the reality of the situation is different.  This gets at the heart of each of the above sources of unreliability.
+  First, there is personal variation over time, whether through change in the person or the context of the persons life.  Second, there is a difference in task - what we really want is the probability of a purchase, but the data forces a binary situation on the individuals.  Finally, for each individual we have only one measure, which is not the most reliable measure.
+  Juster's article finds that having individuals rate the probability they will purchase a product is a better measure of predictability.    While this does not completely fix any of the problems noted above, it allows for a better representation of the uncertainty in an individuals choice and thus makes for a better measure.
+
+Footnote
+$_{\textrm{*Thorndike and Thorndike-Christ, (2010).  Measurement and Evaluation in Psychology and Education (8th Ed.). Pearson}}$
+
 
 ## 1.4  
 After viewing the results of the analyses above, we will determine how to proceed with each dataset in the subsequent specific aims.
@@ -148,17 +171,19 @@ lm(y.n~1, P2)
 mean(P2$y.n) + qt(0.025, 45210) * x.std.error
 mean(P2$y.n) + qt(0.975, 45210) * x.std.error
 
-#bayesian
-calcLikelihoodForProportion <- function(successes, total)
+#BAYESIAN
+
+
+#calcLikelihoodForProportion <- function(successes, total)
   {
      curve(dbinom(successes,total,x)) # plot the likelihood
 }
-calcLikelihoodForProportion(5289, 45211)
+#calcLikelihoodForProportion(5289, 45211)
 
 #credible interval
 qbeta(c(0.025, 0.975),212+5289, 209+39922)
 
-
+#plotting function for prior, likelihood and posterior
 calcPosteriorForProportion <- function(successes, total, a, b)
   {
      # Adapted from triplot() in the LearnBayes package
@@ -194,6 +219,7 @@ calcPosteriorForProportion <- function(successes, total, a, b)
      print(paste("sd for prior=",prior_sd,", for likelihood=",likelihood_sd,", for posterior=",posterior_sd))
 }
 
+#plotting the prior, likelihood and posterior
 calcPosteriorForProportion(5289, 45211, 212, 209)
 
 #credible interval
@@ -201,7 +227,7 @@ qbeta(c(0.025, 0.975),212+5289, 209+39922) # 95% of the time, we would expect th
 qbeta(c(0.005, 0.995),212+5289, 209+39922) # 99% of the time, we would expect the true mean would fall in this interval
 qbeta(c(0.0005, 0.9995),212+5289, 209+39922) # 999 out of 1000 times, we would expect the true mean would fall in this interval
 ```
-Discuss the potential means here.
+Discuss the potential means here and meaning of Bayesian estimation of the mean.
 	
 ## 2.3  
 Using the calculated confidence intervals, we will determine the probability that the USB Toaster will be profitable.
@@ -254,7 +280,8 @@ Full model is best and it fits very well.
 
 ```{r}
 library(alr4)
-
+library(faraway)
+halfnorm(residuals(m3)) #looks okay for a binomial, no big outliers
 ```
 
 
@@ -283,7 +310,7 @@ matplot(thresh,cbind(Sensitivity,Specificity),type="l",xlab="Threshold",ylab="Pr
 plot(1-Specificity,Sensitivity,type="l")
 abline(0,1,lty=2)
 ```
-Not great at predicting...Specificity is good, sensitivity is terrible. So we know some things that make people more likely to buy, but don't have a great model.  Perhaps contingency tables will be better....we could still see how it performs on the test set or just use the full set above.
+Not great at predicting...Specificity is good, sensitivity is terrible. So we know some things that make people more likely to buy, but don't have a great model.  Perhaps contingency tables will be better....we could still see how it performs on the test set or just use the full set above.  (Good verbage borrowed/altered from a text: Almost no cases are classified as "yes" because the probability of "no" almost always dominates the outcome. so the performance is not what we would like, but not surprising given the large proportion of "no" in each category.  Perhaps what is most notable is looking at the individuals predicted as "yes" for product response.)
 
 
 ## 3.4  
@@ -387,4 +414,5 @@ A profit loss model will be built using the breakeven point of 24.13% and fixed 
           3) make contact a binary (known/unknown) and perform logistic     
           regression to see what causes/correlates unknown contact.
           4) maybe look at the prediction for an individual with no debt, no house, single,
-          young, tertiary education, etc - ie., perfect buyer - and see prob they will buy.
+          young, tertiary education, etc - i.e., perfect buyer - and see prob they will buy.  ALso, look at 7 yeses from glm model.
+          5) finally, maybe look at a model with just students and retirees?  How many retirees and students are in the gen pop?  Are these both demos worth chasing?
