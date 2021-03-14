@@ -439,15 +439,52 @@ We can also see that students who said they would buy the product expect to pay 
 ## 4.1  
 A profit loss model will be built using the breakeven point of 24.13% and fixed cost, pricing, and solicitation costs.
 
+From the client info, we know that 24.13% is the break-even point of purchases.  We also know that price pre item, cost per item, and solicitation costs will be fixed.  From this we can construct the profit for a population of size $n$ (in this case the 5 major metropolitan areas) to be
+
+$$Profit_n=nz(\% purchase-24.13)$$
+where $z$ is the margin on one item (fixed price - fixed cost). This essentially gives us the profit per product sold times the difference of percentage of purchasers and the break-even point. Notably, this is for a particular fixed price for the USB toaster.  While solicitation costs and cost per item might be truly considered fixed, it is possible that the client, based on estimated pricing data gained from the sample, might choose to raise the potential fixed price.  In this case, raising the price of the product might lower the break-even sales point since 
+$$Breakeven*nz=solicitation\,\, costs $$  
+shows us that the break-even point and $z$ are inversely related - meaning when margin per item goes up, the break-even point goes down.  Unfortunately, the same is true for $n$ decreasing and the break-even point increasing.  
+
+The pricing estimation information we've included may give additional insight into whether a change in price is justified based on the current proprietary price considered by the client.  We will be more than happy to run calculations and confidence intervals for both sales and profit should the client request this (ALTERNATIVELY We could actually model change in price effect on profit since it is just a calculation - but I'm not doing it right now. - like doubling price means halving the breakeven point, but in a graph from).  For now, we will proceed with all fixed pricing and costs unchanged to see if the product is likely to be profitable as is.
+
+Recent estimates put the college population (hyperlink: https://www.census.gov/newsroom/press-releases/2019/school-enrollment.html) of the US at 18.9 million, while the five major metropolitan markets (NYC, LA, Chicago, Houston, and Pheonix - https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population) are estimated to have a combined population of 19 million.  Thus, we have good news for our client since these populations are roughly the same size and we have a larger than needed positive response rate to make the USB Toaster a profitable product.  Additionally, we can potentially regard the student population as larger given the metropolitan markets contain children that will not be part of the target market, whereas all college students are of an age to buy the USB Toaster.  This result does assume that this doesn't change the cost per item or the solicitation costs however, so the client is encouraged to use the models above to see if the USB Toaster remains profitable under a change in these assumptions.  The client is also more than welcome to contact our team to run additional models or calculations.  
+
+
+
+```{r}
+8336817+3979576+2693976+2320268+1680993 #five metro pops combined
+```
+
+
+
 
 
 4.2  We will look at the results of the previous analyses within the context of this model to give an estimate of the actual profit or loss given by variables noted in 4.1 and the product response confidence interval from SA2.
+
+Using the credible interval of product sales from the student only population we will provide the calculation the 95% credible interval of profit or loss.
+
+Lower bound of profit:
+```{r}
+18900000*(0.2787852-0.2413)
+```
+
+$708,470*z
+
+Upper bound of profit:
+```{r}
+18900000*(0.3244038-0.2413)
+```
+$1,570,662*z
+
+Maybe this is enough....?  I think I've addressed some of what is below already and we cannot know if an increase or decrease in price would change an individuals intent to purchase, so this should be a consideration on the part of the client when considering their current price and a change.  We suggest consulting us further with the proprietary price so that we might analyze potential effects of a different price after looking through the data with a particular focus on the density of the estimated sales prices.
+
 
 
 
 4.3  For respondents that indicate they would buy the USB Toaster we will determine the price range that was suitable for this population.  While the price is proprietary, this knowledge may inform the client as to whether or not the current estimated fixed price is appropriate or whether it might be increased.
 
-
+ ...
 
 4.4  Finally, we will look at variations in the model based on increasing the price of the USB Toaster in terms of the specified variables above.  Note, since these values are proprietary, the results of these analyses will be in terms of the variables and dollars.  The client may then use these calculations to determine the actual dollar profit or loss by entering different values of the variables (where appropriate into the equation).
 
@@ -456,7 +493,6 @@ A profit loss model will be built using the breakeven point of 24.13% and fixed 
 ```
 
 
-##Notes:  
-          3) make contact a binary (known/unknown) and perform logistic     
+##Notes:  1) make contact a binary (known/unknown) and perform logistic 
           regression to see what causes/correlates unknown contact.
-          5) finally, maybe look at a model with just students and retirees?  How many retirees and students are in the gen pop?  Are these both demos worth chasing?
+          
