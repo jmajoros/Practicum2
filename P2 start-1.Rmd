@@ -5,6 +5,26 @@ date: "Due 3/9/2021"
 output: html_document
 ---
 
+# Abstract
+- do this last, get from introduction, EDA, modeling and conclusion/discussion
+
+# Introduction
+- pull from SAP
+
+# Data
+- data processing 
+- describe imputation
+
+# EDA
+
+# Model
+
+# Discussion
+
+# Conclusion
+
+# Appendix
+
 # formatting data and summary stats
 ```{r}
 P2<-cbind(prac_data, price) #joining data sets
