@@ -50,6 +50,14 @@ bc = powerTransform(cbind(age, balance2) ~ 1, P2) #GS would not work here, maybe
 summary(bc)
 summary(P2)
 plot(P2$age,P2$balance )
+plot(y~ education, P2)
+plot(y~ job, P2)
+plot(y~housing, P2)
+plot(y~marital, P2)
+plot(y~default, P2)  # we might infer here that unknown is usually "no" since the proportions match
+plot(y~loan, P2)
+plot(y~contact, P2) # so weird
+
 ```
 
 
