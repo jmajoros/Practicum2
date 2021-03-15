@@ -5,8 +5,6 @@ date: "Due 3/9/2021"
 output: html_document
 ---
 
-# test  
-
 # formatting data and summary stats
 ```{r}
 P2<-cbind(prac_data, price) #joining data sets
