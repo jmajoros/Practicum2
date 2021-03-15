@@ -8,6 +8,15 @@ output: html_document
 # formatting data and summary stats
 ```{r}
 P2<-cbind(prac_data, price) #joining data sets
+
+P2$job[is.na(P2$job)] <- "unknown"
+P2$housing[is.na(P2$housing)] <- "unknown"
+P2$marital[is.na(P2$marital)] <- "unknown"
+P2$education[is.na(P2$education)] <- "unknown"
+P2$default[is.na(P2$default)] <- "unknown"
+P2$loan[is.na(P2$loan)] <- "unknown"
+P2$contact[is.na(P2$contact)] <- "unknown"
+P2$y[is.na(P2$y)] <- "unknown"
 P2$job<-factor(P2$job)  #converting factor variables into factors
 P2$marital<-factor(P2$marital)
 P2$education<-factor(P2$education)
@@ -15,10 +24,14 @@ P2$default<-factor(P2$default)
 P2$housing<-factor(P2$housing)
 P2$loan<-factor(P2$loan)
 P2$contact<-factor(P2$contact)
-P2$month<-factor(P2$month)
-P2$poutcome<-factor(P2$poutcome)
+#$month<-factor(P2$month)
+#P2$poutcome<-factor(P2$poutcome)
 P2$y<-factor(P2$y)
 #factors above have blanks counted as a level instead of being NA
+#filling in known values
+P2$balance<-ifelse(P2$loan=="No",0,P2$balance)
+
+
 
 P2y.n<-split(P2, P2$y)  #splitting the data into yes and no responses
 P2y.n  
@@ -45,17 +58,17 @@ text(P2.obs1,P2.obs2, c("Marital", "Blue Collar", "College", "Mortgage", "Defaul
 # Looking at data
 ```{r}
 #clearing unneeded variables attached to our contact that have many missing values
-drop<-c("duration", "previous", "pdays", "campaign", "poutcome") #tracking our work, not necessarily relevant to our purposes.
-P2.new<-P2[,!(names(P2) %in% drop)]
-
+drop<-c("duration", "previous", "pdays", "campaign", "poutcome", "day", "month") #tracking our work, not necessarily relevant to our purposes.
+P2<-P2[,!(names(P2) %in% drop)]
+str(P2)
 nrow(New.P2)/nrow(P2) #percent of data without NAs
-summary(P2.new) #age and balance, only missing values according to summary
+summary(P2) #age and balance, only missing values according to summary
 table(P2$job) #3048 blank, 261 unknown
 table(P2$marital) #1108 blank
 table(P2$education) #1014 blank, 1816 unknown
 table(P2$default) #1929 blank
 table(P2$housing) #900 blank
-table(P2$loan) #466 blank
+table(P2$loan) # blank
 #table(P2$poutcome) #removed, not part of final dataset
 table(P2$y) #Complete
 ```
@@ -65,10 +78,11 @@ table(P2$y) #Complete
 # Data imputation
 ```{r}
 #Analysis of missing data
-md.pattern(P.2, rotate.names = TRUE)
+md.pattern(P2, rotate.names = TRUE)
 
+str(P2)
 # Predictive mean matching, notes below
-Practicum_Mice <- mice(P.2,m=5,maxit=50,meth=c("pmm","","","","", "","pmm","","","","","",""),seed=500)
+Practicum_Mice <- mice(P2,m=5,maxit=50,meth=c("pmm","","","","", "pmm","","","","",""), seed=500)
 #conduct imputation with PMM method for variables (the variables with no missing values have no method provided)  
 #https://stats.idre.ucla.edu/r/faq/how-do-i-perform-multiple-imputation-using-predictive-mean-matching-in-r/
 #^^^details on method used in mice for age.  Poission dist used for balance.
@@ -87,7 +101,8 @@ stripplot(Practicum_Mice, pch = 20, cex = 1)[1:2] #inspect the distribution of o
 str(Practicum_Mice)
 
 #density plots of dataset against imputed sets for age
-P2.age.full <-P.2$age[!is.na(P.2$age)] #use the original begin_weight values with all missing values removed as the raw dataset for comparison with the five imputed datasets
+P2.age.full <-P2$age[!is.na(P2$age)] #use the original age values with all missing values removed as the raw dataset for comparison with the five imputed datasets
+
 plot(density(P2.age.full), ylim = c(0, 0.05), main = "", xlab = "age", lwd=2)
 lines(density(Practicum_Mice$imp$age[,1]), col = "red", lwd=2)
 lines(density(Practicum_Mice$imp$age[,2]), col = "blue", lwd=2)
@@ -97,7 +112,7 @@ lines(density(Practicum_Mice$imp$age[,5]), col = "orange", lwd=2)
 legend("topright", c("raw data", "imputation 1", "imputation 2", "imputation 3", "imputation 4", "imputation 5"), lwd=c(2,2), col=c("black", "red", "blue", "green", "yellow", "orange"))
 
 #density plots of dataset against imputed sets for age
-P2.b.full <-P.2$balance[!is.na(P.2$balance)] #use the original begin_weight values with all missing values removed as the raw dataset for comparison with the five imputed datasets
+P2.b.full <-P2$balance[!is.na(P2$balance)] #use the original begin_weight values with all missing values removed as the raw dataset for comparison with the five imputed datasets
 plot(density(P2.b.full), ylim = c(0, 0.0015), xlim = c(0, 4000), main = "", xlab = "age", lwd=2)
 lines(density(Practicum_Mice$imp$balance[,1]), col = "red", lwd=2)
 lines(density(Practicum_Mice$imp$balance[,2]), col = "blue", lwd=2)
@@ -225,5 +240,6 @@ write.csv(P2.final,"C:/Users/skip/OneDrive/Desktop/Spring 21/S690//P2.csv", row.
 ```{r}
 library(VIM)
 library(mice)
-Practicum_2_aggr = aggr(P.2, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(P.2), cex.axis=.7, gap=1, ylab=c("Proportion of missingness","Missingness Pattern")) #check proportin of missingness and missing patterns, begin_weight has the most missing values
+Practicum_2_aggr = aggr(P2, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(P2), cex.axis=.7, gap=1, ylab=c("Proportion of missingness","Missingness Pattern")) #check proportin of missingness and missing patterns, begin_weight has the most missing values
+cbind(P2$loan, P2$balance)
 ```
