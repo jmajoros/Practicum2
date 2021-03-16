@@ -10,6 +10,8 @@ library(VIM)
 library(mice)
 setwd("C:/Users/skip/OneDrive/Desktop/Spring 21/S690/")
 P2<-read.csv("C:/Users/skip/OneDrive/Desktop/Spring 21/S690/P2.csv")
+md.pattern(dat2, rotate.names = TRUE) 
+
 P2$balance<-ifelse(P2$loan=="No",0,P2$balance)
 
 #change unknown and blanks to NA's
@@ -502,7 +504,8 @@ Maybe this is enough....?  I think I've addressed some of what is below already 
 4.4  Finally, we will look at variations in the model based on increasing the price of the USB Toaster in terms of the specified variables above.  Note, since these values are proprietary, the results of these analyses will be in terms of the variables and dollars.  The client may then use these calculations to determine the actual dollar profit or loss by entering different values of the variables (where appropriate into the equation).
 
 ```{r}
-
+dat3 <- read.csv("C:/Users/skip/OneDrive/Desktop/Spring 21/S690/prac_data.csv", header=T, na.strings=c(c("unknown", ""),"NA"))
+Practicum_2_aggr = aggr(dat3, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(dat3), cex.axis=.7, gap=1, ylab=c("Proportion of missingness","Missingness Pattern"))
 ```
 
 
