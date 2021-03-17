@@ -587,8 +587,9 @@ for(j in seq(along=thresh)){
 }
 matplot(thresh,cbind(Sensitivity,Specificity),type="l",xlab="Threshold",ylab="Proportion",lty=1:2)
 
-plot(1-Specificity,Sensitivity,type="l")
+plot(1-Specificity,Sensitivity,type="l")  #we would like this to be in the upper left entirely, dashed line is performance fo guessing. 
 abline(0,1,lty=2)
+#Clearly not a great model, but not too uncommon with binary - main thing is we have coefficients that describe general behavior now.
 ```
 
 Not great at predicting...Specificity is good (red - % of time correctly classifying "no"), sensitivity is terrible (black - % of time correctly classifying "yes"). So we know some things that make people more likely to buy, but don't have a great model.  Perhaps contingency tables will be better....we could still see how it performs on the test set or just use the full set above.  (Good verbiage borrowed/altered from a text: Almost no cases are classified as "yes" because the probability of "no" always dominates the outcome. so the performance is not what we would like, but not surprising given the large proportion of "no" in each category.)
