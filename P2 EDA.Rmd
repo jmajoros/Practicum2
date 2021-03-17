@@ -286,8 +286,10 @@ test <- P2[-train_ind, ] #test
 summary(train)
 train$log.b<-log(train$balance2)
 m0<-glm(y.n~1, family=binomial, train)
-m1<-glm(y.n~education+job+age+log.b+housing+loan+default+contact+marital, family=binomial, train) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
+
+m1<-glm(y.n~education+job+age+balance2+housing+loan+default+contact+marital, family=binomial, train) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
 #(also the model didn't converge with price)
+
 sumary(m1)
 
 #model selection 
@@ -331,11 +333,11 @@ hlstat <- with(hldf,
                sum((y-count*ppred)^2/(count*ppred*(1-ppred)))
                )
 c(hlstat, nrow(hldf))
-1-pchisq(hlstat, nrow(hldf)-2)
-#Reasonably good fit...
+1-pchisq(hlstat, nrow(hldf)-2)  #Null hypothesis is the model fits so
+#Not a good fit...
 sumary(m1.final)
 ```
-Our model is a very good fit via the Hosmer-Lemeshow statistic for Goodness-of-fit used for binary logistic regressions.  Comments on plot above.
+Our model is not a good fit via the Hosmer-Lemeshow statistic for Goodness-of-fit used for binary logistic regressions.  Comments on plot above.
 
 
 3.2  Diagnostic analysis will be performed to check the assumptions of the logistic model using residual plots, halfnorm plots and other relevant tests. Potential outliers or influential points will be examined with caution.
@@ -344,52 +346,6 @@ Our model is a very good fit via the Hosmer-Lemeshow statistic for Goodness-of-f
 ```{r}
 library(alr4)
 library(faraway)
-eta <- predict(m1) # linear predictor
-head(eta)
-p.hat <- predict(m1, type="response") # probability of success for any observation
-head(p.hat)
-
-grouped.df <- mutate(train, residuals=residuals(m1), eta=predict(m1)) %>%
-  group_by(ntile(eta, 100)) %>%
-  summarise(residuals=mean(residuals), eta=mean(eta))
-# The key residual plot
-plot(residuals ~ eta, grouped.df, xlab=expression(eta))
-#looks like there might be some curvature.
-
-
-#residuals by age
-train %>% 
-  mutate(residuals=residuals(m1)) %>%
-  group_by(age) %>%
-  summarise(residuals=mean(residuals), .groups = 'drop') %>%
-  ggplot(aes(x=age,y=residuals)) + geom_point()
-#clearly screwy - I think this is because of students and retirees buying WAY more than other groups.  Could also be the cause of curvature.
-
-#residuals by balance2
-train %>% 
-  mutate(residuals=residuals(m1)) %>%
-  group_by(log.b) %>%
-  summarise(residuals=mean(residuals), .groups = 'drop') %>%
-  ggplot(aes(x=log.b,y=residuals)) + geom_point()
-#balance looks crazy, I don't know what to make of this....
-
-train %>% 
-  mutate(residuals=residuals(m1)) %>%
-  group_by(job) %>%
-  summarise(residuals=mean(residuals), .groups = 'drop') %>%
-  ggplot(aes(x=job,y=residuals)) + geom_point()
-# student and retiree have a larger residuals..., but not crazy - just indicitive of them buying more than the model expects.
-
-train %>% 
-  mutate(residuals=residuals(m1)) %>%
-  group_by(marital) %>%
-  summarise(residuals=mean(residuals), .groups = 'drop') %>%
-  ggplot(aes(x=marital,y=residuals)) + geom_point()
-
-#####Someone could look at more of these, I need a break.'''
-
-halfnorm(residuals(m1.final)) # no crazy outliers here.  All follow the pattern.
-
 #Trying binned age
 agebreaks <- c(94, 84, 74, 64, 54, 44, 34, 24, 0)
 
@@ -402,7 +358,6 @@ levels(train$age.f) <- rev(c("95 and up","85 to 94 years","75 to 84 years","65 t
 as.data.frame(table(train$age.f))
 head(train$age)
 head(train$age.f)
-hist(train$age)
 levels(train$age.f) <- list("65 years and up"=c("95 and up","85 to 94 years","75 to 84 years","65 to 74 years"), "55 to 64 years"="55 to 64 years","45 to 54 years"="45 to 54 years","35 to 44 years"="35 to 44 years",
     "25 to 34 years"="25 to 34 years", "younger than 24 years"="younger than 24 years")
 ```
@@ -412,12 +367,123 @@ Balance has big residuals because of the binary behavior.  Doesn't look great fo
 
 
 I tried other models to see if I could get rid of curvature.  No luck.
-New model with age as factor by decade...doesn't work as well (spoilers)
+However, the new model with age as factor by decade...does at least fit the data, though it is approaching bad fit....
 ```{r}
 summary(train)
 #New model with age as factor...
 m0<-glm(y.n~1, family=binomial, train)
 m1<-glm(y.n~education+job+age.f+balance2+housing+loan+default+contact+marital, family=binomial, train) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
+#(also the model didn't converge with price)
+sumary(m1)
+
+#model selection 
+#both direction stepwise starting with null
+m.sw1 = step(m0,
+            scope=list(lower=m0, upper=m1),
+            direction = "both", trace = F)
+m.sw1$anova
+#both directions starting with full
+m.sw2 = step(m1,
+             scope=list(lower=m0, upper=m1),
+             direction = "both", trace = F)
+
+m.sw2$anova
+
+m.sw1  #sAME MODEL
+m.sw2
+m1<-m.sw1 
+
+
+m1
+train<-train %>% 
+  mutate(p.hat=predict(m1, type="response"),
+         eta = predict(m1))
+
+
+hldf <- train %>% 
+  group_by(ntile(eta, 100)) %>%
+  summarise(y=sum(y=='ye'), ppred=mean(p.hat), count=n()) %>%
+  mutate(se.fit=sqrt(ppred*(1-ppred)/count))
+#View(hldf)
+
+
+#Plot of the predicted values versus actual values binned and averaged. Values falling on the line are in perfect agreement.  Lines show 95% confidence interval
+ggplot(hldf,aes(x=ppred,y=y/count,ymin=y/count-2*se.fit,ymax=y/count+2*se.fit))+geom_point()+geom_linerange(color=grey(0.75))+geom_abline(intercept=0,slope=1)+xlab("Predicted Probability")+ylab("Observed Proportion")
+#Looks like a good fit, close to 95/100 fall in 95% confint, exactly as we'd expect.
+
+# Hosmer-Lemeshow statistic for Goodness-of-fit
+
+
+hlstat <- with(hldf, 
+               sum((y-count*ppred)^2/(count*ppred*(1-ppred)))
+               )
+c(hlstat, nrow(hldf))
+1-pchisq(hlstat, nrow(hldf)-2)
+#This model fits, we would not reject the null here.
+m.final<-m1
+```
+
+So you can see my notes and some plots below, I suspect this slight curvature is due to the behavior of balance2 (abs val of balance to fix inconsistencies in recording).  Even though there is slight curvature, the residuals are not very big - if anyone has any ideas to improve this, go for it!  Maybe we even take out balance and see how it performs?
+
+Note:  Someone can perform on test dataset to see if the model fits well, but given bad prediction, maybe we don't need to...we can just get general behaviors from the coefficients of this model.
+
+
+```{r}
+eta <- predict(m1.final) # linear predictor
+head(eta)
+p.hat <- predict(m1.final, type="response") # probability of success for any observation
+head(p.hat)
+
+grouped.df <- mutate(train, residuals=residuals(m1), eta=predict(m1.final)) %>%
+  group_by(ntile(eta, 100)) %>%
+  summarise(residuals=mean(residuals), eta=mean(eta))
+# The key residual plot
+plot(residuals ~ eta, grouped.df, xlab=expression(eta))
+#looks like there might be some curvature.
+
+
+#residuals by age
+train %>% 
+  mutate(residuals=residuals(m1.final)) %>%
+  group_by(age.f) %>%
+  summarise(residuals=mean(residuals), .groups = 'drop') %>%
+  ggplot(aes(x=age.f,y=residuals)) + geom_point()
+#clearly screwy - I think this is because of students and retirees buying WAY more than other groups.  Could also be the cause of curvature.
+
+#residuals by balance2 in log on x to see behavior better
+train %>% 
+  mutate(residuals=residuals(m1.final)) %>%
+  group_by(balance2) %>%
+  summarise(residuals=mean(residuals), .groups = 'drop') %>%
+  ggplot(aes(x=log(balance2),y=residuals)) + geom_point()
+#balance looks crazy, I these are basically the residuals diverging for the yes response since it is predicting everything to be no.
+
+train %>% 
+  mutate(residuals=residuals(m1.final)) %>%
+  group_by(job) %>%
+  summarise(residuals=mean(residuals), .groups = 'drop') %>%
+  ggplot(aes(x=job,y=residuals)) + geom_point()
+# student and retiree have a smaller residuals...this is indicative of them buying more than other jobs and having an outsized effect on the model
+
+train %>% 
+  mutate(residuals=residuals(m1.final)) %>%
+  group_by(marital) %>%
+  summarise(residuals=mean(residuals), .groups = 'drop') %>%
+  ggplot(aes(x=marital,y=residuals)) + geom_point()
+
+#####Someone could look at more of these, I need a break.'''
+
+halfnorm(residuals(m1.final)) # no crazy outliers here.  All follow the pattern.
+#####Someone could look at more of these, I need a break.
+```
+
+
+IGNORE
+```{r}
+summary(train)
+#New model with age as factor...and log of balance
+m0<-glm(y.n~1, family=binomial, train)
+m1<-glm(y.n~education+job+age.f+log.b+housing+loan+default+contact+marital, family=binomial, train) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
 #(also the model didn't converge with price)
 sumary(m1)
 
@@ -449,12 +515,7 @@ hldf <- train %>%
   group_by(ntile(eta, 100)) %>%
   summarise(y=sum(y=='ye'), ppred=mean(p.hat), count=n()) %>%
   mutate(se.fit=sqrt(ppred*(1-ppred)/count))
-#View(hldf)
 
-
-#Plot of the predicted values versus actual values binned and averaged. Values falling on the line are in perfect agreement.  Lines show 95% confidence interval
-ggplot(hldf,aes(x=ppred,y=y/count,ymin=y/count-2*se.fit,ymax=y/count+2*se.fit))+geom_point()+geom_linerange(color=grey(0.75))+geom_abline(intercept=0,slope=1)+xlab("Predicted Probability")+ylab("Observed Proportion")
-#Looks like a good fit, close to 95/100 fall in 95% confint, exactly as we'd expect.
 
 # Hosmer-Lemeshow statistic for Goodness-of-fit
 
@@ -464,13 +525,14 @@ hlstat <- with(hldf,
                )
 c(hlstat, nrow(hldf))
 1-pchisq(hlstat, nrow(hldf)-2)
-#Not as good of a fit...
+#Not as good of a fit...so we shouldn't use log of balance
 ```
-Try again will box-cox transformations...didn't work...now overwriting with interaction term
+Try again will box-cox transformation for balance...Nope
 
 ```{r}
-m0<-glm(y.n~1, family=binomial, train)
-m1<-glm(y.n~education+job+age+balance2+housing+loan+default+contact+marital+job*age, family=binomial, train) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
+train_b$balance<-train$balance2^0.17
+m0<-glm(y.n~1, family=binomial, train_b)
+m1<-glm(y.n~education+job+age.f+balance+housing+loan+default+contact+marital, family=binomial, train_b) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
 #(also the model didn't converge with price)
 sumary(m1)
 
@@ -489,12 +551,6 @@ hldf <- train %>%
   group_by(ntile(eta, 100)) %>%
   summarise(y=sum(y=='ye'), ppred=mean(p.hat), count=n()) %>%
   mutate(se.fit=sqrt(ppred*(1-ppred)/count))
-#View(hldf)
-
-
-#Plot of the predicted values versus actual values binned and averaged. Values falling on the line are in perfect agreement.  Lines show 95% confidence interval
-ggplot(hldf,aes(x=ppred,y=y/count,ymin=y/count-2*se.fit,ymax=y/count+2*se.fit))+geom_point()+geom_linerange(color=grey(0.75))+geom_abline(intercept=0,slope=1)+xlab("Predicted Probability")+ylab("Observed Proportion")
-#Looks like a good fit.
 
 # Hosmer-Lemeshow statistic for Goodness-of-fit
 
@@ -503,53 +559,9 @@ hlstat <- with(hldf,
                sum((y-count*ppred)^2/(count*ppred*(1-ppred)))
                )
 c(hlstat, nrow(hldf))
-1-pchisq(hlstat, nrow(hldf)-2) #Very good fit.
-m1.final2<-m1
-
-eta <- predict(m1.final2) # linear predictor
-head(eta)
-p.hat <- predict(m1.final2, type="response") # probability of success for any observation
-head(p.hat)
-
-grouped.df <- mutate(train, residuals=residuals(m1.final2), eta=predict(m1.final2)) %>%
-  group_by(ntile(eta, 100)) %>%
-  summarise(residuals=mean(residuals), eta=mean(eta))
-# The key residual plot
-plot(residuals ~ eta, grouped.df, xlab=expression(eta))
-#looks like there might be some curvature.
-
-
-#residuals by age
-train %>% 
-  mutate(residuals=residuals(m1)) %>%
-  group_by(age) %>%
-  summarise(residuals=mean(residuals), .groups = 'drop') %>%
-  ggplot(aes(x=age,y=residuals)) + geom_point()
-#clearly screwy - I think this is because of students and retirees buying WAY more than other groups.  Could also be the cause of curvature.
-
-#residuals by balance2
-train %>% 
-  mutate(residuals=residuals(m1)) %>%
-  group_by(log.b) %>%
-  summarise(residuals=mean(residuals), .groups = 'drop') %>%
-  ggplot(aes(x=log.b,y=residuals)) + geom_point()
-#balance looks crazy
-
-train %>% 
-  mutate(residuals=residuals(m1)) %>%
-  group_by(job) %>%
-  summarise(residuals=mean(residuals), .groups = 'drop') %>%
-  ggplot(aes(x=job,y=residuals)) + geom_point()
-# student and retiree have a larger residuals..., but not crazy - just indicitive of them buying more than the model expects.
-
-train %>% 
-  mutate(residuals=residuals(m1)) %>%
-  group_by(marital) %>%
-  summarise(residuals=mean(residuals), .groups = 'drop') %>%
-  ggplot(aes(x=marital,y=residuals)) + geom_point()
-
+1-pchisq(hlstat, nrow(hldf)-2) #Not good fit.  
+#Null is that it fits, so we would reject this.
 ```
-This looks less curved, but not enough less to give up the interpretability.
 
 
 3.3 Tests will be conducted to see the accuracy of the model (correct classification rate) with respect to correctly identifying whether an individual will or will not purchase the product based on the other variables in the model using the test set (the data not used in the training set).
@@ -647,7 +659,17 @@ sumary(m3)  #we see student/retired, tertiary, divorced/single, no house
 ```
 Let's look at a model composed only of students and retirees...
 ```{r}
-Prime<-subset(P2, job=="student"|job=="retired", select = c(balance2,job,marital,education,housing,contact,default, y, price, y.n))
+P2$age.f <-cut(P2$age, agebreaks, include.lowest=F)
+#rename
+levels(P2$age.f) <- rev(c("95 and up","85 to 94 years","75 to 84 years","65 to 74 years",
+    "55 to 64 years","45 to 54 years","35 to 44 years",
+    "25 to 34 years", "younger than 24 years"))
+as.data.frame(table(P2$age.f))
+head(P2$age)
+head(P2$age.f)
+levels(P2$age.f) <- list("65 years and up"=c("95 and up","85 to 94 years","75 to 84 years","65 to 74 years"), "55 to 64 years"="55 to 64 years","45 to 54 years"="45 to 54 years","35 to 44 years"="35 to 44 years",
+    "25 to 34 years"="25 to 34 years", "younger than 24 years"="younger than 24 years")
+Prime<-subset(P2, job=="student"|job=="retired", select = c(balance2,age.f,job,marital,education,housing,contact,default, y, price, y.n))
 summary(Prime)
 732/2254 #yes rate is good
 ct= xtabs( ~ y + job, Prime)
@@ -656,7 +678,7 @@ ct
 256/(256+620)#student purchase rate - much better
 
 #So...student only model
-Prime<-subset(P2, job=="student", select = c(balance2,marital,education,housing,contact,default, y, price, y.n))
+Prime<-subset(P2, job=="student", select = c(balance2,age.f,marital,education,housing,contact,default, y, price, y.n))
 summary(Prime)
 256/(256+620) #student purchase rate 41.3%  not TOO far from sample 1...could be explained by the skew towards men in sample 1, meaning that their numbers were possibly accurate for the pop they surveyed.
 
@@ -668,11 +690,11 @@ calcPosteriorForProportion(256, 256+620, 212, 209)
 #credible interval
 qbeta(c(0.025, 0.975),212+256, 209+876) # 95% of the time, we would expect the true mean would fall in this interval
 
-Prime<-subset(Prime, y.n==1, select = c( price))
-summary(Prime)
+Prime_price<-subset(Prime, y.n==1, select = c( price))
+summary(Prime_price)
 P2.y<-subset(P2, y.n==1, select = c( price))
 {
-plot(density(Prime$price), col="red")
+plot(density(Prime_price$price), col="red")
 lines(density(P2.y$price), col="blue", add=T)
 }
 
@@ -682,6 +704,59 @@ mean(Prime$price) # mean estimated price for student pop of yeses
 So, it looks like we have a specific target market that this product *could* work for.  But the question is really if targeting colleges can achieve a high enough population to match the 5 major metros originally intended and will it change the costs (and effectively the breakeven point)?  This is something the client must answer, but IF they still want to move forward with the USB Toaster, we've given them a clear path where they could even have college logos on the outside of the toasters.
 
 We can also see that students who said they would buy the product expect to pay about $28 more than the population of yeses on the whole (yeses there were higher than no's as well).  So it could justify raising the sale price which *may* make achieving a profit more likely.
+
+#New logistic model based on this subpop.
+```{r}
+m0<-glm(y.n~1, family=binomial, Prime)
+m1<-glm(y.n~education+age.f+balance2+housing+default+contact+marital, family=binomial, Prime)
+
+sumary(m1)
+
+#model selection 
+#both direction stepwise starting with null
+m.sw1 = step(m0,
+            scope=list(lower=m0, upper=m1),
+            direction = "both", trace = F)
+m.sw1$anova
+#both directions starting with full
+m.sw2 = step(m1,
+             scope=list(lower=m0, upper=m1),
+             direction = "both", trace = F)
+
+m.sw2$anova
+
+m.sw1  #sAME MODEL
+m.sw2
+m1<-m.sw1 # Only things that matter for student pop are houising and contact
+
+
+m1
+Prime<-Prime %>% 
+  mutate(p.hat=predict(m1, type="response"),
+         eta = predict(m1))
+
+
+hldf <- Prime %>% 
+  group_by(ntile(eta, 10)) %>%
+  summarise(y=sum(y=='ye'), ppred=mean(p.hat), count=n()) %>%
+  mutate(se.fit=sqrt(ppred*(1-ppred)/count))
+#View(hldf)
+
+
+#Plot of the predicted values versus actual values binned and averaged. Values falling on the line are in perfect agreement.  Lines show 95% confidence interval
+ggplot(hldf,aes(x=ppred,y=y/count,ymin=y/count-2*se.fit,ymax=y/count+2*se.fit))+geom_point()+geom_linerange(color=grey(0.75))+geom_abline(intercept=0,slope=1)+xlab("Predicted Probability")+ylab("Observed Proportion")
+#Looks like a good fit, close to 95/100 fall in 95% confint, exactly as we'd expect.
+
+# Hosmer-Lemeshow statistic for Goodness-of-fit
+hlstat <- with(hldf, 
+               sum((y-count*ppred)^2/(count*ppred*(1-ppred)))
+               )
+c(hlstat, nrow(hldf))
+1-pchisq(hlstat, nrow(hldf)-2)
+#This model fits very badly, so we would reject this model.
+```
+
+
 
 
 # Specific Aim 4:  What does the data tell us in terms of potential profit or loss based on the outcome of the analysis?
