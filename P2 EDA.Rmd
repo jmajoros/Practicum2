@@ -705,7 +705,7 @@ So, it looks like we have a specific target market that this product *could* wor
 
 We can also see that students who said they would buy the product expect to pay about $28 more than the population of yeses on the whole (yeses there were higher than no's as well).  So it could justify raising the sale price which *may* make achieving a profit more likely.
 
-#New logistic model based on this subpop.
+#New logistic model based on this subpop.  Not good, so we can stick with the previous model for inference and the contingency tables above.
 ```{r}
 m0<-glm(y.n~1, family=binomial, Prime)
 m1<-glm(y.n~education+age.f+balance2+housing+default+contact+marital, family=binomial, Prime)
