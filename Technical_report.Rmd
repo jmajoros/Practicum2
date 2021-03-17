@@ -1,0 +1,1087 @@
+---
+title: "An Analysis of Market Response to the USB Toaster"
+author: "Skip Potts, Abby Shambaugh, Jordan Majoros, Risheng Li"
+date: "3/17/2021"
+output: pdf_document
+---
+
+# Abstract
+
+# Introduction
+
+# Data
+- data processing 
+- describe imputation
+
+# formatting data and summary stats
+```{r}
+P2<-cbind(prac_data, price) #joining data sets
+
+P2$job[is.na(P2$job)] <- "unknown"
+P2$housing[is.na(P2$housing)] <- "unknown"
+P2$marital[is.na(P2$marital)] <- "unknown"
+P2$education[is.na(P2$education)] <- "unknown"
+P2$default[is.na(P2$default)] <- "unknown"
+P2$loan[is.na(P2$loan)] <- "unknown"
+P2$contact[is.na(P2$contact)] <- "unknown"
+P2$y[is.na(P2$y)] <- "unknown"
+P2$job<-factor(P2$job)  #converting factor variables into factors
+P2$marital<-factor(P2$marital)
+P2$education<-factor(P2$education)
+P2$default<-factor(P2$default)
+P2$housing<-factor(P2$housing)
+P2$loan<-factor(P2$loan)
+P2$contact<-factor(P2$contact)
+#$month<-factor(P2$month)
+#P2$poutcome<-factor(P2$poutcome)
+P2$y<-factor(P2$y)
+#factors above have blanks counted as a level instead of being NA
+#filling in known values
+P2$balance<-ifelse(P2$loan=="No",0,P2$balance)
+
+
+
+P2y.n<-split(P2, P2$y)  #splitting the data into yes and no responses
+P2y.n  
+summary(P2y.n$no) # summary of no responses (for Table 2)
+summary(P2y.n$ye) # summary of yes responses (for Table 2)
+summary(P2)  # summary of total responses (for Table 2)
+nrow(P2y.n$ye)  #total yes
+nrow(P2y.n$no)   #total no
+New.P2<-na.omit(P2)  #dataset with no NA's
+nrow(New.P2) #data with no NA's, remembering factors are blanks and not NA
+```
+# Figure 1
+```{r}
+P2.obs2<-c(59, 20, 29, 55, 2, 65)  #percent levels in table 2 data
+P2.obs1<-c(14, 2, 83, 5.6, 44, 36) #percent levels in table 1 data
+
+
+# plot showing #percent levels in table 1 data vx table 2
+plot(P2.obs1,P2.obs2,type="n",xlab="Initial Population by %",ylab="Random Sample by %", xlim=c(-10,90), ylim=c(-10,90))
+lines(-10:100,-10:100)
+text(P2.obs1,P2.obs2, c("Marital", "Blue Collar", "College", "Mortgage", "Default", "Cell Phone"))
+```
+
+# Looking at data
+```{r}
+#clearing unneeded variables attached to our contact that have many missing values
+drop<-c("duration", "previous", "pdays", "campaign", "poutcome", "day", "month") #tracking our work, not necessarily relevant to our purposes.
+P2<-P2[,!(names(P2) %in% drop)]
+str(P2)
+nrow(New.P2)/nrow(P2) #percent of data without NAs
+summary(P2) #age and balance, only missing values according to summary
+table(P2$job) #3048 blank, 261 unknown
+table(P2$marital) #1108 blank
+table(P2$education) #1014 blank, 1816 unknown
+table(P2$default) #1929 blank
+table(P2$housing) #900 blank
+table(P2$loan) # blank
+#table(P2$poutcome) #removed, not part of final dataset
+table(P2$y) #Complete
+```
+
+
+
+# Data imputation
+```{r}
+#Analysis of missing data
+md.pattern(P2, rotate.names = TRUE)
+
+str(P2)
+# Predictive mean matching, notes below
+Practicum_Mice <- mice(P2,m=5,maxit=50,meth=c("pmm","","","","", "pmm","","","","",""), seed=500)
+#conduct imputation with PMM method for variables (the variables with no missing values have no method provided)  
+#https://stats.idre.ucla.edu/r/faq/how-do-i-perform-multiple-imputation-using-predictive-mean-matching-in-r/
+#^^^details on method used in mice for age.  Poission dist used for balance.
+#methods(mice)
+
+#Not necessary to write about
+Practicum_Mice$meth #display the methods corresponding to each variable
+```
+
+# Viewing imputed data
+```{r}
+Practicum_Mice$imp$age #display 2568 imputed ages for five imputed datasets
+
+#Maybe use?  Data set is so big that we can't see a ton here - maybe just use the density plots below
+stripplot(Practicum_Mice, pch = 20, cex = 1)[1:2] #inspect the distribution of original and imputed data
+str(Practicum_Mice)
+
+#density plots of dataset against imputed sets for age
+P2.age.full <-P2$age[!is.na(P2$age)] #use the original age values with all missing values removed as the raw dataset for comparison with the five imputed datasets
+
+plot(density(P2.age.full), ylim = c(0, 0.05), main = "", xlab = "age", lwd=2)
+lines(density(Practicum_Mice$imp$age[,1]), col = "red", lwd=2)
+lines(density(Practicum_Mice$imp$age[,2]), col = "blue", lwd=2)
+lines(density(Practicum_Mice$imp$age[,3]), col = "green", lwd=2)
+lines(density(Practicum_Mice$imp$age[,4]), col = "yellow", lwd=2)
+lines(density(Practicum_Mice$imp$age[,5]), col = "orange", lwd=2)
+legend("topright", c("raw data", "imputation 1", "imputation 2", "imputation 3", "imputation 4", "imputation 5"), lwd=c(2,2), col=c("black", "red", "blue", "green", "yellow", "orange"))
+
+#density plots of dataset against imputed sets for age
+P2.b.full <-P2$balance[!is.na(P2$balance)] #use the original begin_weight values with all missing values removed as the raw dataset for comparison with the five imputed datasets
+plot(density(P2.b.full), ylim = c(0, 0.0015), xlim = c(0, 4000), main = "", xlab = "age", lwd=2)
+lines(density(Practicum_Mice$imp$balance[,1]), col = "red", lwd=2)
+lines(density(Practicum_Mice$imp$balance[,2]), col = "blue", lwd=2)
+lines(density(Practicum_Mice$imp$balance[,3]), col = "green", lwd=2)
+lines(density(Practicum_Mice$imp$balance[,4]), col = "yellow", lwd=2)
+lines(density(Practicum_Mice$imp$balance[,5]), col = "orange", lwd=2)
+legend("topright", c("raw data", "imputation 1", "imputation 2", "imputation 3", "imputation 4", "imputation 5"), lwd=c(2,2), col=c("black", "red", "blue", "green", "yellow", "orange"))
+```
+# Chose imputed set 4
+```{r}
+P.2.mice = complete(Practicum_Mice,4) #creating imputed data set
+```
+
+
+# Checking proportions of yes/no in blanks against full set
+```{r}
+summary(P.2.mice) 
+summary(P2)
+
+P2job<-split(P2, P2$job) #splitting data by job factor level
+P2.miss.job<-P2job[[1]] #looking at blank level
+summary(P2.miss.job)  #finding missing data y/n ratio
+summary(P2) # finding population y/n ratio
+x<-360/(2688+360) #y/n same as total pop - MAR 11.8
+prop.test(x=c(360,5289), n=c(2688+360, 45211),
+          conf.level=0.95)
+
+P2.unk.job<-P2job$unknown  #looking at unknown level
+summary(P2.unk.job)
+x<-32/(229+32) #y/n close to total pop - MAR 12.2
+prop.test(x=c(32,5289), n=c(229+32, 45211),
+          conf.level=0.95)
+
+P2mar<-split(P2, P2$marital) #splitting data by marital factor level
+P2.miss.m<-P2mar[[1]]
+summary(P2.miss.m)
+x=148/(148+960) #y/n slightly higher, but close to total pop 13.4
+prop.test(x=c(148,5289), n=c(148+960, 45211),
+          conf.level=0.95)
+
+P2ed<-split(P2, P2$education) #splitting data by education factor level
+P2.miss.e<-P2ed[[1]]  #missing
+summary(P2.miss.e)
+x=115/(115+899) #y/n same as pop basically - 11.3
+prop.test(x=c(115,5289), n=c(115+899, 45211),
+          conf.level=0.95)
+
+P2.unk.e<-P2ed$unknown  #unknown  EDUCATION UNKNOWN IS SIGNIFICANTLY DIFFERENT
+#but not hugely so
+summary(P2.unk.e)
+(x=250/(250+1566)) #y/n same as pop basically - 13.8
+prop.test(x=c(250,5289), n=c(250+1566, 45211),
+          conf.level=0.95)
+
+P2d<-split(P2, P2$default)  #splitting data by default factor level
+P2.miss.d<-P2d[[1]]
+summary(P2.miss.d)
+x=224/(224+1705) #y/n same as pop basically - 11.6
+prop.test(x=c(224,5289), n=c(224+1705, 45211),
+          conf.level=0.95)
+
+P2h<-split(P2, P2$housing)  #splitting data by housing factor level
+P2.miss.h<-P2h[[1]]
+summary(P2.miss.h)
+x=97/(97+803) #y/n slightly lower, but close to total pop 10.7
+prop.test(x=c(97,5289), n=c(97+803, 45211),
+          conf.level=0.95)
+
+P2c<-split(P2, P2$contact)  #splitting data by contact factor level
+P2.miss.c<-P2c[[1]]
+summary(P2.miss.c)
+x=6/(6+31) #y/n slightly higher, but close to total pop 16.2 w/very small sample.
+#this should be a random recording error likely
+prop.test(x=c(6,5289), n=c(37, 45211),
+          conf.level=0.95)
+
+P2.unk.c<-P2c$unknown  #Contact type UNKNOWN SIGNIFICANTLY DIFF
+summary(P2.unk.c)
+(x=530/(530+12478)) #y/n not close to total pop - 4.1 
+prop.test(x=c(530,5289), n=c(530+12478, 45211),
+          conf.level=0.95)
+```
+#There is no evidence that MOST missing values come from different distributions.
+There is evidence that "unknown" as an education level is statistically different, but not meaningfully so.
+There is very strong evidence that contact method unknown is different.  
+
+# Imputing final data set
+```{r}
+P2.final<-P.2.mice[,!(names(P.2.mice) %in% drop)]
+```
+
+# contingency table of conact to check factor level distributions and significant difference from normal pop.
+```{r}
+xtabs( ~ y + contact, P2.final)
+#NA - 16.2%
+6/(31+6)
+#Unknown - 4.1%
+530/(530+12478)
+#tele - 13.3%
+389/(389+2515)
+#cell - 14.9%
+4364/(4364+24898)
+
+#prop.test to see if cell is sig diff.
+prop.test(x=c(4364,5289), n=c(12478+4364, 45211),
+          conf.level=0.95)
+#prop.test to see if tele is sig diff.
+prop.test(x=c(389,5289), n=c(389+2515, 45211),
+          conf.level=0.95)
+```
+#^^^ Every factor level of contact is significantly different from the standard pop.  
+So weird.  Basically, unknown is the biggest issue and it is totally different from tele and cell.  
+
+```{r}
+drop<-c("day", "month", "poutcome") #tracking our work, not necessarily relevant to our purposes.
+P2.final<-P.2.mice[,!(names(P.2.mice) %in% drop)]
+summary(P2.final)
+```
+# Export final data set
+```{r}
+write.csv(P2.final,"C:/Users/skip/OneDrive/Desktop/Spring 21/S690//P2.csv", row.names = FALSE)
+```
+
+
+
+
+# EDA
+
+# Looking more at missing data from "contact"
+```{r}
+library(VIM)
+library(mice)
+setwd("C:/Users/skip/OneDrive/Desktop/Spring 21/S690/")
+P2<-read.csv("C:/Users/skip/OneDrive/Desktop/Spring 21/S690/P2.csv")
+P2$job<-factor(P2$job)  #converting factor variables into factors
+P2$marital<-factor(P2$marital)
+P2$education<-factor(P2$education)
+P2$default<-factor(P2$default)
+P2$housing<-factor(P2$housing)
+P2$loan<-factor(P2$loan)
+P2$contact<-factor(P2$contact)
+P2$y<-factor(P2$y)
+
+P2$balance<-ifelse(P2$loan=="No",0,P2$balance)
+
+#change unknown and blanks to NA's
+dat2 <- read.csv("C:/Users/skip/OneDrive/Desktop/Spring 21/S690/P2.csv", header=T, na.strings=c(c("unknown", ""),"NA"))
+#dropping non-obs responses
+drop<-c("day", "month", "poutcome", "previous", "duration", "campaign", "pdays", "age", "balance", "price") #tracking our work, not necessarily relevant to our purposes.  I also removed variables which were complete.
+dat2<-dat2[,!(names(dat2) %in% drop)]
+
+
+
+
+
+Practicum_2_aggr = aggr(dat2, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(dat2), cex.axis=.7, gap=1, ylab=c("Proportion of missingness","Missingness Pattern")) #check proportion of missingness and missing patterns, contact has the most missing values
+
+md.pattern(dat2, rotate.names = TRUE) #check the pattern of missing values, visual useless, console is useful
+
+library(dplyr)
+dat3<-filter(dat2, is.na(dat2$contact))
+nrow(dat3)
+drop<-c("contact") #removing contact
+dat4<-dat3[,!(names(dat3) %in% drop)]
+dat4<-na.omit(dat4)
+dat4$y<-factor(dat4$y)
+summary(dat4)
+#still can't figure out why y is so strange on contact...
+```
+
+Contact behaves strangely missing nearly 4 times as much data as the next variable, but being the only one for which the level of unknown was truly significantly different.  Based on knowing that unknown contact is very different from other values, we might infer that people that say "no" are more likely to also not tell us their mode of contact - probably not the reverse.  We might also guess that contact is among the last pieces of info asked and people may have tired of answering at this point.  Essentially, people that are more willing to answer all or most of the questions, are more likely to say yes...but this doesn't really seem to add up either.  We may just need to say it is not understood, but there is a connection and it could be explored further in the future if the client is interested.
+
+# Univriate EDA and Bivariate EDA 
+```{r}
+library(car)
+hist(P2$age) # not great
+hist(P2$balance) # not so good, seems like we have negatives coded on accident here.
+P2$balance2<-abs(P2$balance)+1  #changing to absolute value
+#maybe transform there using box-cox
+bc = powerTransform(cbind(age, balance2) ~ 1, P2) #GS would not work here, maybe change to a factor...
+summary(bc)
+summary(P2) 
+plot(P2$age,P2$balance )
+plot(y~education, P2)
+plot(y~ job, P2)
+plot(y~housing, P2)
+plot(y~marital, P2)
+plot(y~default, P2)  # we might infer here that unknown is usually "no" since the proportions match
+plot(y~loan, P2)
+plot(y~contact, P2) # so weird
+
+```
+
+
+#Specific Aim 1:  How are the two datasets (from Table 1 and Table 2)  different and why?
+
+## 1.1 
+Product Response will be considered as the response variable where “yes” means an individual indicated that they would purchase the USB Toaster and “no” indicated they would not.  Common variables between the two datasets are: age, marital status, profession, education level, whether an individual has a mortgage or not, whether an individual has a personal loan other than a mortgage, the balance of any non-mortgage personal loan, and primary phone (cell or telephone).  Additionally, whether an individual is 60 days delinquent or in credit default may also be comparable between datasets. 
+
+Deleting binary variable on whether someone has a personal loan for two reasons:
+1) we can get this info based on the balance
+2) balance and loan don't agree.  Balance is probably the more useful (maybe true).
+I figured this out MUCH later, so we might not have it here.  It makes sense to put in above area where we examine univariate/bivariate data.
+
+## 1.2  
+Common variables between the two datasets will be compared to determine whether they represent the same population.  We will use proportion tests that compare the percentages of certain types of demographic data and the total number of respondents for the dataset to determine if the datasets represent the same population or populations that are fundamentally different.
+```{r}
+#changing all to factor and merging blanks and unknowns into a single factor.
+P2$job<-factor(sub("^$", "unknown", P2$job))
+P2$marital<-factor(sub("^$", "unknown", P2$marital))
+P2$education<-factor(sub("^$", "unknown", P2$education))
+P2$default<-factor(sub("^$", "unknown", P2$default))
+P2$housing<-factor(sub("^$", "unknown", P2$housing))
+P2$loan<-factor(sub("^$", "unknown", P2$loan))
+P2$contact<-factor(sub("^$", "unknown", P2$contact))
+P2$y<-factor(P2$y)
+summary(P2)
+```
+
+```{r}
+#prop.test to see if marital status is sig diff. in two pops.
+prop.test(x=c(421*0.14,26543), n=c(421, 45211),
+          conf.level=0.95)
+#Very different
+
+#prop.test to see if blue-collar is sig diff. in two pops.
+prop.test(x=c(421*0.02,9064), n=c(421, 45211),
+          conf.level=0.95)
+#Very different
+
+#prop.test to see if student is sig diff. in two pops.
+table(P2$job)
+prop.test(x=c(421*0.65,876), n=c(421, 45211),
+          conf.level=0.95)
+#Very different
+
+#prop.test to see if unemployed/unknown is sig diff. in two pops.
+table(P2$job)
+prop.test(x=c(421*0.047,3309+1222), n=c(421, 45211),
+          conf.level=0.95)
+#Very different
+
+#prop.test to see if education is sig diff. in two pops.
+table(P2$education)
+prop.test(x=c(421*0.83,13015), n=c(421, 45211),
+          conf.level=0.95)
+#Very different
+
+#prop.test to see if mortgage is sig diff. in two pops.
+prop.test(x=c(421*0.056,24656), n=c(421, 45211),
+          conf.level=0.95)
+#Very different
+
+#prop.test to see if 60+/default is sig diff. in two pops.
+prop.test(x=c(421*0.44,784), n=c(421, 45211),
+          conf.level=0.95)
+#Very different
+
+#prop.test to see if contact is sig diff. in two pops.
+prop.test(x=c(421*0.36,29262), n=c(421, 45211),
+          conf.level=0.95)
+#Very different
+```
+Here we can talk about how these are different and why.  Their population somehow is in debt, college, men, who use cells phones less, and are fiscally irresponsible...even if they want to buy this product, they may not have the money to do so.  
+
+This gets to measure accuracy which we will talk about below in the psychometrics and other research (below)
+
+## 1.3  
+Based on the results of the above analyses, we will determine how and some potential reasons why the dataset are different (if we find they are) using both statistical reasoning and potentially some psychometric theory and research.
+
+We can talk about my above notes here.  Sampling error skewing the population.  Also sources of error on psychological tests (intent to buy) time differences, personal variation, task not reflective of event.  More on this last one, research indicates surveys and focus groups aren't great barometers for purchasing.  A potential better metric will be discussed later, but we will move forward with the data we have.
+
+
+### (Rough Draft of some text below. This might be better as part of the conclusion and suggesting a different approach to future research in this area.)
+
+It has been noted that surveys asking if people will hypothetically buy a product with money they may not have, is not necessarily a good measure for intent to buy.  In researching the viability of this measure, our consulting team found a particular source of interest that specifically investigated durable homewares as part of its data.  According to research published in the Journal of the American Statistical Association by F. Thomas Juster, "consumer intentions to buy are inefficient predictors of purchase rates because they do not provide accurate estimates of mean purchase probability." (hyperlink: https://www.tandfonline.com/doi/abs/10.1080/01621459.1966.10480897) 
+
+The reasons for this may be rooted in the fact that measuring an intent to purchase is a psychological construct and these measures have commonly known sources of unreliability*, all of which apply in this context.  The three common sources of performance variation are:
+1) The person tested may change from one testing to the next
+2) The task measured and the behavior may be different
+3) The limited sample of the behavior results in an unstable and undependable score.
+
+While it is not the intent to delve deeply into psychometrics, a brief aside exploring the potential reliability of the product intent variable in the context of the research above might be fruitful for understanding the task at hand of examining the probability of product success.
+
+  In the article by Juster, the predominant source of error cited that made customer buying intentions problematic.  As Juster puts it, "intentions surveys cannot detect movements in mean probability among nonin- tenders, who account for the bulk of actual purchases and for most of the time-series variance in purchase rates." Meaning that though our data gives a "yes" or "no" response, the reality of the situation is different.  This gets at the heart of each of the above sources of unreliability.
+  First, there is personal variation over time, whether through change in the person or the context of the persons life.  Second, there is a difference in task - what we really want is the probability of a purchase, but the data forces a binary situation on the individuals.  Finally, for each individual we have only one measure, which is not the most reliable measure.
+  Juster's article finds that having individuals rate the probability they will purchase a product is a better measure of predictability.    While this does not completely fix any of the problems noted above, it allows for a better representation of the uncertainty in an individuals choice and thus makes for a better measure.
+
+Footnote
+$_{\textrm{*Thorndike and Thorndike-Christ, (2010).  Measurement and Evaluation in Psychology and Education (8th Ed.). Pearson}}$
+
+
+## 1.4  
+After viewing the results of the analyses above, we will determine how to proceed with each dataset in the subsequent specific aims.
+
+We will proceed using our data set as the primary means of analysis, while also incorporating in the client data where suitable.
+
+#Specific Aim 2:  What is the likelihood, based on all available data, that the USB Toaster will be a success?
+
+## 2.1  
+Using the data decided upon in specific aim 1 (SA1), we will focus on the average number of respondents that indicated they would purchase the USB Toaster.
+
+```{r}
+table(P2$y)
+5289/39922 #positive product response
+```
+
+## 2.2  
+Confidence intervals will be calculated for this average to give the potential range of sales within a 95% probability band.  We will generate confidence intervals based on both frequency of response in the final dataset and potentially a Bayesian estimate of the average using the data provided by the client as a baseline and adding to that the new information gathered in Table 2.
+
+```{r}
+#frequentist Table 1 and 2
+data1<-c(replicate(212+5289, 1), replicate(209+39922, 0))
+x.std.error <- sd(data1)/sqrt(45211+421)
+mean(data1) + qt(0.025, 45211+420) * x.std.error
+mean(data1) + qt(0.975, 45211+420) * x.std.error
+
+#frequentist only Table 2
+P2$y.n<-as.numeric(P2$y)-1
+x.std.error <- sd(P2$y.n)/sqrt(45211)
+lm(y.n~1, P2)
+mean(P2$y.n) + qt(0.025, 45210) * x.std.error
+mean(P2$y.n) + qt(0.975, 45210) * x.std.error
+
+#BAYESIAN
+
+
+#calcLikelihoodForProportion <- function(successes, total)
+ # {
+    # curve(dbinom(successes,total,x)) # plot the likelihood
+#}
+#calcLikelihoodForProportion(5289, 45211)
+
+#credible interval
+qbeta(c(0.025, 0.975),212+5289, 209+39922)
+
+#plotting function for prior, likelihood and posterior
+calcPosteriorForProportion <- function(successes, total, a, b)
+  {
+     # Adapted from triplot() in the LearnBayes package
+     # Plot the prior, likelihood and posterior:
+     likelihood_a = successes + 1; likelihood_b = total - successes + 1
+     posterior_a = a + successes;  posterior_b = b + total - successes
+     theta = seq(0.005, 0.995, length = 500)
+     prior = dbeta(theta, a, b)
+     likelihood = dbeta(theta, likelihood_a, likelihood_b)
+     posterior  = dbeta(theta, posterior_a, posterior_b)
+     m = max(c(prior, likelihood, posterior))
+     plot(theta, posterior, type = "l", ylab = "Density",, xlab="Estimated Positive Product Response",
+          lty = 2, lwd = 3, main = "", ylim = c(0, m), col = "red")
+     lines(theta, likelihood, lty = 1, lwd = 3, col = "blue")
+     lines(theta, prior, lty = 3, lwd = 3, col = "green")
+     legend(x=0.75,y=m, c("Prior", "Likelihood", "Posterior"), lty = c(3, 1, 2),
+          lwd = c(3, 3, 3), col = c("green", "blue", "red"))
+     # Print out summary statistics for the prior, likelihood and posterior:
+     calcBetaMode <- function(aa, bb) { BetaMode <- (aa - 1)/(aa + bb - 2); return(BetaMode); }
+     calcBetaMean <- function(aa, bb) { BetaMean <- (aa)/(aa + bb); return(BetaMean); }
+     calcBetaSd   <- function(aa, bb) { BetaSd <- sqrt((aa * bb)/(((aa + bb)^2) * (aa + bb + 1))); return(BetaSd); }
+     prior_mode      <- calcBetaMode(a, b)
+     likelihood_mode <- calcBetaMode(likelihood_a, likelihood_b)
+     posterior_mode  <- calcBetaMode(posterior_a, posterior_b)
+     prior_mean      <- calcBetaMean(a, b)
+     likelihood_mean <- calcBetaMean(likelihood_a, likelihood_b)
+     posterior_mean  <- calcBetaMean(posterior_a, posterior_b)
+     prior_sd        <- calcBetaSd(a, b)
+     likelihood_sd   <- calcBetaSd(likelihood_a, likelihood_b)
+     posterior_sd    <- calcBetaSd(posterior_a, posterior_b)
+     print(paste("mode for prior=",prior_mode,", for likelihood=",likelihood_mode,", for posterior=",posterior_mode))
+     print(paste("mean for prior=",prior_mean,", for likelihood=",likelihood_mean,", for posterior=",posterior_mean))
+     print(paste("sd for prior=",prior_sd,", for likelihood=",likelihood_sd,", for posterior=",posterior_sd))
+}
+
+#plotting the prior, likelihood and posterior
+calcPosteriorForProportion(5289, 45211, 212, 209)
+
+#credible interval
+qbeta(c(0.025, 0.975),212+5289, 209+39922) # 95% of the time, we would expect the true mean would fall in this interval
+qbeta(c(0.005, 0.995),212+5289, 209+39922) # 99% of the time, we would expect the true mean would fall in this interval
+qbeta(c(0.0005, 0.9995),212+5289, 209+39922) # 999 out of 1000 times, we would expect the true mean would fall in this interval
+```
+Discuss the potential means here and meaning of Bayesian estimation of the mean.
+	
+## 2.3  
+Using the calculated confidence intervals, we will determine the probability that the USB Toaster will be profitable.
+
+```{r}
+1-pbeta(.2413, 212+5289, 209+39922)
+```
+Essentially a 0% chance with the target market.  Hope is not lost, better targeting and price raising might lead to a profit.
+
+# Specific Aim 3: What are some useful demographic data points that might help inform a potential marketing campaign?
+
+## 3.1  
+Regardless of the findings of SA2 (probability of product profit or loss), we will construct a logistic regression model using product response as the outcome variable and a training set of data (part of the dataset).  A logistic regression model will describe the change in odds of a success (indication of intent to purchase) based on changes in the other variables.   
+
+```{r}
+#create training set
+library(car)
+library(faraway)
+# 50% of the sample size
+sample_size <- floor(0.5 * nrow(P2))
+# set the seed to make the partition reproducible
+set.seed(538)
+train_ind <- sample(seq_len(nrow(P2)), size = sample_size)
+train <- P2[train_ind, ] #training
+test <- P2[-train_ind, ] #test
+
+summary(train)
+train$log.b<-log(train$balance2)
+m0<-glm(y.n~1, family=binomial, train)
+
+m1<-glm(y.n~education+job+age+balance2+housing+loan+default+contact+marital, family=binomial, train) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
+#(also the model didn't converge with price)
+
+sumary(m1)
+
+#model selection 
+#both direction stepwise starting with null
+m.sw1 = step(m0,
+            scope=list(lower=m0, upper=m1),
+            direction = "both", trace = F)
+m.sw1$anova
+#both directions starting with full
+m.sw2 = step(m1,
+             scope=list(lower=m0, upper=m1),
+             direction = "both", trace = F)
+
+m.sw2$anova
+
+m1.final<-m.sw1  #both create same model
+m1<-m.sw2
+
+
+
+train<-train %>% 
+  mutate(p.hat=predict(m1, type="response"),
+         eta = predict(m1))
+
+
+hldf <- train %>% 
+  group_by(ntile(eta, 100)) %>%
+  summarise(y=sum(y=='ye'), ppred=mean(p.hat), count=n()) %>%
+  mutate(se.fit=sqrt(ppred*(1-ppred)/count))
+#View(hldf)
+
+library(ggplot2)
+#Plot of the predicted values versus actual values binned and averaged. Values falling on the line are in perfect agreement.  Lines show 95% confidence interval
+ggplot(hldf,aes(x=ppred,y=y/count,ymin=y/count-2*se.fit,ymax=y/count+2*se.fit))+geom_point()+geom_linerange(color=grey(0.75))+geom_abline(intercept=0,slope=1)+xlab("Predicted Probability")+ylab("Observed Proportion")
+#Looks like a good fit, close to 95/100 fall in 95% confint, exactly as we'd expect.
+
+# Hosmer-Lemeshow statistic for Goodness-of-fit
+
+
+hlstat <- with(hldf, 
+               sum((y-count*ppred)^2/(count*ppred*(1-ppred)))
+               )
+c(hlstat, nrow(hldf))
+1-pchisq(hlstat, nrow(hldf)-2)  #Null hypothesis is the model fits so
+#Not a good fit...
+sumary(m1.final)
+```
+Our model is not a good fit via the Hosmer-Lemeshow statistic for Goodness-of-fit used for binary logistic regressions.  Comments on plot above.
+
+
+3.2  Diagnostic analysis will be performed to check the assumptions of the logistic model using residual plots, halfnorm plots and other relevant tests. Potential outliers or influential points will be examined with caution.
+
+
+```{r}
+library(alr4)
+library(faraway)
+#Trying binned age
+agebreaks <- c(94, 84, 74, 64, 54, 44, 34, 24, 0)
+
+#cut
+train$age.f <-cut(train$age, agebreaks, include.lowest=F)
+#rename
+levels(train$age.f) <- rev(c("95 and up","85 to 94 years","75 to 84 years","65 to 74 years",
+    "55 to 64 years","45 to 54 years","35 to 44 years",
+    "25 to 34 years", "younger than 24 years"))
+as.data.frame(table(train$age.f))
+head(train$age)
+head(train$age.f)
+levels(train$age.f) <- list("65 years and up"=c("95 and up","85 to 94 years","75 to 84 years","65 to 74 years"), "55 to 64 years"="55 to 64 years","45 to 54 years"="45 to 54 years","35 to 44 years"="35 to 44 years",
+    "25 to 34 years"="25 to 34 years", "younger than 24 years"="younger than 24 years")
+```
+So you can see my notes and some plots above, I suspect this curvature is due to the behaviour of age - which is pretty crazy.  Even though there is slight curvature, the residuals are not very big - if anyone has any ideas to improve this, go for it!
+
+Balance has big residuals because of the binary behavior.  Doesn't look great for the model though...maybe we should take it out for violating assumptions.  Probably should do that....
+
+
+I tried other models to see if I could get rid of curvature.  No luck.
+However, the new model with age as factor by decade...does at least fit the data, though it is approaching bad fit....
+```{r}
+summary(train)
+#New model with age as factor...
+m0<-glm(y.n~1, family=binomial, train)
+m1<-glm(y.n~education+job+age.f+balance2+housing+loan+default+contact+marital, family=binomial, train) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
+#(also the model didn't converge with price)
+sumary(m1)
+
+#model selection 
+#both direction stepwise starting with null
+m.sw1 = step(m0,
+            scope=list(lower=m0, upper=m1),
+            direction = "both", trace = F)
+m.sw1$anova
+#both directions starting with full
+m.sw2 = step(m1,
+             scope=list(lower=m0, upper=m1),
+             direction = "both", trace = F)
+
+m.sw2$anova
+
+m.sw1  #sAME MODEL
+m.sw2
+m1<-m.sw1 
+
+
+m1
+train<-train %>% 
+  mutate(p.hat=predict(m1, type="response"),
+         eta = predict(m1))
+
+
+hldf <- train %>% 
+  group_by(ntile(eta, 100)) %>%
+  summarise(y=sum(y=='ye'), ppred=mean(p.hat), count=n()) %>%
+  mutate(se.fit=sqrt(ppred*(1-ppred)/count))
+#View(hldf)
+
+
+#Plot of the predicted values versus actual values binned and averaged. Values falling on the line are in perfect agreement.  Lines show 95% confidence interval
+ggplot(hldf,aes(x=ppred,y=y/count,ymin=y/count-2*se.fit,ymax=y/count+2*se.fit))+geom_point()+geom_linerange(color=grey(0.75))+geom_abline(intercept=0,slope=1)+xlab("Predicted Probability")+ylab("Observed Proportion")
+#Looks like a good fit, close to 95/100 fall in 95% confint, exactly as we'd expect.
+
+# Hosmer-Lemeshow statistic for Goodness-of-fit
+
+
+hlstat <- with(hldf, 
+               sum((y-count*ppred)^2/(count*ppred*(1-ppred)))
+               )
+c(hlstat, nrow(hldf))
+1-pchisq(hlstat, nrow(hldf)-2)
+#This model fits, we would not reject the null here.
+m.final<-m1
+```
+
+So you can see my notes and some plots below, I suspect this slight curvature is due to the behavior of balance2 (abs val of balance to fix inconsistencies in recording).  Even though there is slight curvature, the residuals are not very big - if anyone has any ideas to improve this, go for it!  Maybe we even take out balance and see how it performs?
+
+Note:  Someone can perform on test dataset to see if the model fits well, but given bad prediction, maybe we don't need to...we can just get general behaviors from the coefficients of this model.
+
+
+```{r}
+eta <- predict(m1.final) # linear predictor
+head(eta)
+p.hat <- predict(m1.final, type="response") # probability of success for any observation
+head(p.hat)
+
+grouped.df <- mutate(train, residuals=residuals(m1), eta=predict(m1.final)) %>%
+  group_by(ntile(eta, 100)) %>%
+  summarise(residuals=mean(residuals), eta=mean(eta))
+# The key residual plot
+plot(residuals ~ eta, grouped.df, xlab=expression(eta))
+#looks like there might be some curvature.
+
+
+#residuals by age
+train %>% 
+  mutate(residuals=residuals(m1.final)) %>%
+  group_by(age.f) %>%
+  summarise(residuals=mean(residuals), .groups = 'drop') %>%
+  ggplot(aes(x=age.f,y=residuals)) + geom_point()
+#clearly screwy - I think this is because of students and retirees buying WAY more than other groups.  Could also be the cause of curvature.
+
+#residuals by balance2 in log on x to see behavior better
+train %>% 
+  mutate(residuals=residuals(m1.final)) %>%
+  group_by(balance2) %>%
+  summarise(residuals=mean(residuals), .groups = 'drop') %>%
+  ggplot(aes(x=log(balance2),y=residuals)) + geom_point()
+#balance looks crazy, I these are basically the residuals diverging for the yes response since it is predicting everything to be no.
+
+train %>% 
+  mutate(residuals=residuals(m1.final)) %>%
+  group_by(job) %>%
+  summarise(residuals=mean(residuals), .groups = 'drop') %>%
+  ggplot(aes(x=job,y=residuals)) + geom_point()
+# student and retiree have a smaller residuals...this is indicative of them buying more than other jobs and having an outsized effect on the model
+
+train %>% 
+  mutate(residuals=residuals(m1.final)) %>%
+  group_by(marital) %>%
+  summarise(residuals=mean(residuals), .groups = 'drop') %>%
+  ggplot(aes(x=marital,y=residuals)) + geom_point()
+
+#####Someone could look at more of these, I need a break.'''
+
+halfnorm(residuals(m1.final)) # no crazy outliers here.  All follow the pattern.
+#####Someone could look at more of these, I need a break.
+```
+
+
+IGNORE
+```{r}
+summary(train)
+#New model with age as factor...and log of balance
+m0<-glm(y.n~1, family=binomial, train)
+m1<-glm(y.n~education+job+age.f+log.b+housing+loan+default+contact+marital, family=binomial, train) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
+#(also the model didn't converge with price)
+sumary(m1)
+
+#model selection 
+#both direction stepwise starting with null
+m.sw1 = step(m0,
+            scope=list(lower=m0, upper=m1),
+            direction = "both", trace = F)
+m.sw1$anova
+#both directions starting with full
+m.sw2 = step(m1,
+             scope=list(lower=m0, upper=m1),
+             direction = "both", trace = F)
+
+m.sw2$anova
+
+m.sw1  #sAME MODEL
+m.sw2
+m1<-m.sw2 # model with better fit via AIC
+
+
+m1
+train<-train %>% 
+  mutate(p.hat=predict(m1, type="response"),
+         eta = predict(m1))
+
+
+hldf <- train %>% 
+  group_by(ntile(eta, 100)) %>%
+  summarise(y=sum(y=='ye'), ppred=mean(p.hat), count=n()) %>%
+  mutate(se.fit=sqrt(ppred*(1-ppred)/count))
+
+
+# Hosmer-Lemeshow statistic for Goodness-of-fit
+
+
+hlstat <- with(hldf, 
+               sum((y-count*ppred)^2/(count*ppred*(1-ppred)))
+               )
+c(hlstat, nrow(hldf))
+1-pchisq(hlstat, nrow(hldf)-2)
+#Not as good of a fit...so we shouldn't use log of balance
+```
+Try again will box-cox transformation for balance...Nope
+
+```{r}
+train_b$balance<-train$balance2^0.17
+m0<-glm(y.n~1, family=binomial, train_b)
+m1<-glm(y.n~education+job+age.f+balance+housing+loan+default+contact+marital, family=binomial, train_b) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
+#(also the model didn't converge with price)
+sumary(m1)
+
+#model selection 
+#both direction stepwise starting with null
+m.sw1 = step(m0,
+            scope=list(lower=m0, upper=m1),
+            direction = "both", trace = F)
+m1<-m.sw1
+train<-train %>% 
+  mutate(p.hat=predict(m1, type="response"),
+         eta = predict(m1))
+
+
+hldf <- train %>% 
+  group_by(ntile(eta, 100)) %>%
+  summarise(y=sum(y=='ye'), ppred=mean(p.hat), count=n()) %>%
+  mutate(se.fit=sqrt(ppred*(1-ppred)/count))
+
+# Hosmer-Lemeshow statistic for Goodness-of-fit
+
+
+hlstat <- with(hldf, 
+               sum((y-count*ppred)^2/(count*ppred*(1-ppred)))
+               )
+c(hlstat, nrow(hldf))
+1-pchisq(hlstat, nrow(hldf)-2) #Not good fit.  
+#Null is that it fits, so we would reject this.
+```
+
+
+3.3 Tests will be conducted to see the accuracy of the model (correct classification rate) with respect to correctly identifying whether an individual will or will not purchase the product based on the other variables in the model using the test set (the data not used in the training set).
+
+```{r}
+summary(train)
+train<-mutate(train, p.hat=predict(m1.final, type="response"), eta=predict(m1.final))
+train_b <- mutate(train, predout=ifelse(p.hat < 0.5, "no", "yes"))
+xtabs( ~ y + predout, train_b)
+#correct spec rate for training 88.2%, but basically by saying no every time (1-0.117=0.883...)
+(19937)/nrow(train_b)
+
+thresh <- seq(0.01, 0.3, by = 0.01)
+Class.rate <- numeric(length(thresh))
+Sensitivity <- numeric(length(thresh))
+Specificity <- numeric(length(thresh))
+for(j in seq(along=thresh)){
+  pp <- ifelse(train$p.hat < thresh[j],"no","yes")
+  xx <- xtabs( ~ y + pp, train)
+  Class.rate[j] <- (xx[1,1] + xx[2,2])/sum(xx)
+  Sensitivity[j] <- xx[2,2]/(xx[2,1]+xx[2,2])
+  Specificity[j] <- xx[1,1]/(xx[1,1]+xx[1,2])
+}
+matplot(thresh,cbind(Sensitivity,Specificity),type="l",xlab="Threshold",ylab="Proportion",lty=1:2)
+
+plot(1-Specificity,Sensitivity,type="l")  #we would like this to be in the upper left entirely, dashed line is performance fo guessing. 
+abline(0,1,lty=2)
+#Clearly not a great model, but not too uncommon with binary - main thing is we have coefficients that describe general behavior now.
+```
+
+Not great at predicting...Specificity is good (red - % of time correctly classifying "no"), sensitivity is terrible (black - % of time correctly classifying "yes"). So we know some things that make people more likely to buy, but don't have a great model.  Perhaps contingency tables will be better....we could still see how it performs on the test set or just use the full set above.  (Good verbiage borrowed/altered from a text: Almost no cases are classified as "yes" because the probability of "no" always dominates the outcome. so the performance is not what we would like, but not surprising given the large proportion of "no" in each category.)
+
+
+## 3.4  
+Contingency tables will also be constructed to determine if particular combinations of variables are especially lucrative possibilities or potentially poor demographics for sales.  While binomial regression (two end values, yes and no) will give us odds changes based on variable changes, contingency tables can give us strong insight into the relationship between predictive variables that could help in mirco-targeting potential buyers (more below).
+
+```{r}
+ct.stuff<-function(fact1, fact2, data){
+(ct = xtabs(P2$y.n ~ fact1 + fact2, data)) #yes count on education by employment
+(ct2 = xtabs( ~ fact1 + fact2, data))
+ct/ct2
+}
+summary(P2)
+table(P2$education)
+ct.stuff(P2$education, P2$job, P2) #shows percentage yes for cross section.  We see students say yes much more frequently overall.  Over 24.13%...only place we see this - basically college or grad students
+#retired also approaches critical, and is over for tertiary
+#unemployed tertiary also decent at 19%
+
+ct.stuff(P2$education, P2$marital, P2)  #single-tertiary at 18.3%, 
+
+ct.stuff(P2$education, P2$default, P2)  #tertiary better, but not great.
+
+ct.stuff(P2$education, P2$housing, P2)  #tertiary and no house @ 20%
+
+ct.stuff(P2$education, P2$contact, P2)  #tertiary again performing well.
+
+ct.stuff(P2$job, P2$marital, P2) #retired but not single, students not divorced- especially single, single and unemployed
+
+ct.stuff(P2$job, P2$default, P2) #students unless in default, similar to retired (not as good, but okay)
+
+ct.stuff(P2$job, P2$housing, P2) #retired non-home-owner, student non-homeowner, and unemployed non-homeowner
+
+ct.stuff(P2$job, P2$contact, P2)  #here's the caveat,  This weird group of unknown contacts
+#other than this, students and retirees still come out okay.
+
+ct.stuff(P2$marital, P2$default, P2)  #single is better...but nothing special
+
+ct.stuff(P2$marital, P2$housing, P2)  #single non-homeowner, generally nonhomeowners are better
+
+ct.stuff(P2$marital, P2$contact, P2) #single cell and divorced tele
+
+ct.stuff(P2$default, P2$housing, P2) # no housing, no default.  We are starting to get a clearer picture of a demo type here.
+# generally single, well-educated, students or retirees with no encumberance (financial or relationship).  Basically the picture of table 1.
+
+ct.stuff(P2$default, P2$contact, P2) #cellular no default.  Again, unencumbered.
+
+ct.stuff(P2$housing, P2$contact, P2) #non-homeowners - this product isn't about people on the go, it's about single people living in apartments.
+
+str(P2)
+```
+
+
+3.5  The contingency tables generated will be analyzed further to determine if specific variables are independent of others or have a relationship.  These results may allow the consultants to modify certain variables to be more descriptive and explanatory within the dataset.  This will potentially illuminate some variable relationships further (such as marital status and education’s combined effect on intent to purchase).
+
+Done above.
+
+# 3.6  
+The final models of both methods described above will be interpreted to determine any useful demographic data that may be used to maximize profit by targeted marketing.  In the case of a probable loss in section SA2, this may allow for stronger profit potential based on focusing on the demographics identified in the models that are positively associated with intent to purchase.
+
+```{r}
+sumary(m3)  #we see student/retired, tertiary, divorced/single, no house
+#we can interpret these, but I don't think it is necessary
+#these are all in line with the cts
+# we can use the general direction and size from logistic regression, but with specific % from cts to discuss
+#Unfortunately for the client, student + retired is less than 3k of a 45K+ sample and this may be the limiting factor. (roughly 13K have tertiary, over 17k single/divorced, over 24.5k no housing)
+```
+Let's look at a model composed only of students and retirees...
+```{r}
+P2$age.f <-cut(P2$age, agebreaks, include.lowest=F)
+#rename
+levels(P2$age.f) <- rev(c("95 and up","85 to 94 years","75 to 84 years","65 to 74 years",
+    "55 to 64 years","45 to 54 years","35 to 44 years",
+    "25 to 34 years", "younger than 24 years"))
+as.data.frame(table(P2$age.f))
+head(P2$age)
+head(P2$age.f)
+levels(P2$age.f) <- list("65 years and up"=c("95 and up","85 to 94 years","75 to 84 years","65 to 74 years"), "55 to 64 years"="55 to 64 years","45 to 54 years"="45 to 54 years","35 to 44 years"="35 to 44 years",
+    "25 to 34 years"="25 to 34 years", "younger than 24 years"="younger than 24 years")
+Prime<-subset(P2, job=="student"|job=="retired", select = c(balance2,age.f,job,marital,education,housing,contact,default, y, price, y.n))
+summary(Prime)
+732/2254 #yes rate is good
+ct= xtabs( ~ y + job, Prime)
+ct
+476/2110 #retiree purchase rate - still not good enough
+256/(256+620)#student purchase rate - much better
+
+#So...student only model
+Prime<-subset(P2, job=="student", select = c(balance2,age.f,marital,education,housing,contact,default, y, price, y.n))
+summary(Prime)
+256/(256+620) #student purchase rate 41.3%  not TOO far from sample 1...could be explained by the skew towards men in sample 1, meaning that their numbers were possibly accurate for the pop they surveyed.
+
+#let's rerun the bayseian stuff now...
+#plotting the prior, likelihood and posterior
+calcPosteriorForProportion(256, 256+620, 212, 209)
+#posterior mean at 36% if we use their sample - probably shouldn't because it looks like gender has an influence.
+
+#credible interval
+qbeta(c(0.025, 0.975),212+256, 209+876) # 95% of the time, we would expect the true mean would fall in this interval
+
+Prime_price<-subset(Prime, y.n==1, select = c( price))
+summary(Prime_price)
+P2.y<-subset(P2, y.n==1, select = c( price))
+{
+plot(density(Prime_price$price), col="red")
+lines(density(P2.y$price), col="blue", add=T)
+}
+
+mean(P2.y$price) #mean estimated price for total pop of yeses
+mean(Prime$price) # mean estimated price for student pop of yeses
+```
+So, it looks like we have a specific target market that this product *could* work for.  But the question is really if targeting colleges can achieve a high enough population to match the 5 major metros originally intended and will it change the costs (and effectively the breakeven point)?  This is something the client must answer, but IF they still want to move forward with the USB Toaster, we've given them a clear path where they could even have college logos on the outside of the toasters.
+
+We can also see that students who said they would buy the product expect to pay about $28 more than the population of yeses on the whole (yeses there were higher than no's as well).  So it could justify raising the sale price which *may* make achieving a profit more likely.
+
+#New logistic model based on this subpop.  Not good, so we can stick with the previous model for inference and the contingency tables above.
+```{r}
+m0<-glm(y.n~1, family=binomial, Prime)
+m1<-glm(y.n~education+age.f+balance2+housing+default+contact+marital, family=binomial, Prime)
+
+sumary(m1)
+
+#model selection 
+#both direction stepwise starting with null
+m.sw1 = step(m0,
+            scope=list(lower=m0, upper=m1),
+            direction = "both", trace = F)
+m.sw1$anova
+#both directions starting with full
+m.sw2 = step(m1,
+             scope=list(lower=m0, upper=m1),
+             direction = "both", trace = F)
+
+m.sw2$anova
+
+m.sw1  #sAME MODEL
+m.sw2
+m1<-m.sw1 # Only things that matter for student pop are houising and contact
+
+
+m1
+Prime<-Prime %>% 
+  mutate(p.hat=predict(m1, type="response"),
+         eta = predict(m1))
+
+
+hldf <- Prime %>% 
+  group_by(ntile(eta, 10)) %>%
+  summarise(y=sum(y=='ye'), ppred=mean(p.hat), count=n()) %>%
+  mutate(se.fit=sqrt(ppred*(1-ppred)/count))
+#View(hldf)
+
+
+#Plot of the predicted values versus actual values binned and averaged. Values falling on the line are in perfect agreement.  Lines show 95% confidence interval
+ggplot(hldf,aes(x=ppred,y=y/count,ymin=y/count-2*se.fit,ymax=y/count+2*se.fit))+geom_point()+geom_linerange(color=grey(0.75))+geom_abline(intercept=0,slope=1)+xlab("Predicted Probability")+ylab("Observed Proportion")
+#Looks like a good fit, close to 95/100 fall in 95% confint, exactly as we'd expect.
+
+# Hosmer-Lemeshow statistic for Goodness-of-fit
+hlstat <- with(hldf, 
+               sum((y-count*ppred)^2/(count*ppred*(1-ppred)))
+               )
+c(hlstat, nrow(hldf))
+1-pchisq(hlstat, nrow(hldf)-2)
+#This model fits very badly, so we would reject this model.
+```
+
+
+
+
+# Specific Aim 4:  What does the data tell us in terms of potential profit or loss based on the outcome of the analysis?
+
+## 4.1  
+A profit loss model will be built using the breakeven point of 24.13% and fixed cost, pricing, and solicitation costs.
+
+From the client info, we know that 24.13% is the break-even point of purchases.  We also know that price pre item, cost per item, and solicitation costs will be fixed.  From this we can construct the profit for a population of size $n$ (in this case the 5 major metropolitan areas) to be
+
+$$Profit_n=nz(\% purchase-24.13)$$
+where $z$ is the margin on one item (fixed price - fixed cost). This essentially gives us the profit per product sold times the difference of percentage of purchasers and the break-even point. Notably, this is for a particular fixed price for the USB toaster.  While solicitation costs and cost per item might be truly considered fixed, it is possible that the client, based on estimated pricing data gained from the sample, might choose to raise the potential fixed price.  In this case, raising the price of the product might lower the break-even sales point since 
+$$Breakeven*nz=solicitation\,\, costs $$  
+shows us that the break-even point and $z$ are inversely related - meaning when margin per item goes up, the break-even point goes down.  Unfortunately, the same is true for $n$ decreasing and the break-even point increasing.  
+
+The pricing estimation information we've included may give additional insight into whether a change in price is justified based on the current proprietary price considered by the client.  We will be more than happy to run calculations and confidence intervals for both sales and profit should the client request this (ALTERNATIVELY We could actually model change in price effect on profit since it is just a calculation - but I'm not doing it right now. - like doubling price means halving the breakeven point, but in a graph from).  For now, we will proceed with all fixed pricing and costs unchanged to see if the product is likely to be profitable as is.
+
+Recent estimates put the college population (hyperlink: https://www.census.gov/newsroom/press-releases/2019/school-enrollment.html) of the US at 18.9 million, while the five major metropolitan markets (NYC, LA, Chicago, Houston, and Pheonix - https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population) are estimated to have a combined population of 19 million.  Thus, we have good news for our client since these populations are roughly the same size and we have a larger than needed positive response rate to make the USB Toaster a profitable product.  Additionally, we can potentially regard the student population as larger given the metropolitan markets contain children that will not be part of the target market, whereas all college students are of an age to buy the USB Toaster.  This result does assume that this doesn't change the cost per item or the solicitation costs however, so the client is encouraged to use the models above to see if the USB Toaster remains profitable under a change in these assumptions.  The client is also more than welcome to contact our team to run additional models or calculations.  
+
+
+
+```{r}
+8336817+3979576+2693976+2320268+1680993 #five metro pops combined
+```
+
+
+
+
+
+4.2  We will look at the results of the previous analyses within the context of this model to give an estimate of the actual profit or loss given by variables noted in 4.1 and the product response confidence interval from SA2.
+
+Using the credible interval of product sales from the student only population we will provide the calculation the 95% credible interval of profit or loss.
+
+Lower bound of profit:
+```{r}
+18900000*(0.2787852-0.2413)
+```
+
+$708,470*z
+
+Upper bound of profit:
+```{r}
+18900000*(0.3244038-0.2413)
+```
+$1,570,662*z
+
+Maybe this is enough....?  I think I've addressed some of what is below already and we cannot know if an increase or decrease in price would change an individuals intent to purchase, so this should be a consideration on the part of the client when considering their current price and a change.  We suggest consulting us further with the proprietary price so that we might analyze potential effects of a different price after looking through the data with a particular focus on the density of the estimated sales prices.
+
+
+
+
+4.3  For respondents that indicate they would buy the USB Toaster we will determine the price range that was suitable for this population.  While the price is proprietary, this knowledge may inform the client as to whether or not the current estimated fixed price is appropriate or whether it might be increased.
+
+ ...
+
+4.4  Finally, we will look at variations in the model based on increasing the price of the USB Toaster in terms of the specified variables above.  Note, since these values are proprietary, the results of these analyses will be in terms of the variables and dollars.  The client may then use these calculations to determine the actual dollar profit or loss by entering different values of the variables (where appropriate into the equation).
+
+```{r}
+dat3 <- read.csv("C:/Users/skip/OneDrive/Desktop/Spring 21/S690/prac_data.csv", header=T, na.strings=c(c("unknown", ""),"NA"))
+Practicum_2_aggr = aggr(dat3, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(dat3), cex.axis=.7, gap=1, ylab=c("Proportion of missingness","Missingness Pattern"))
+```
+
+
+##Notes:  1) make contact a binary (known/unknown) and perform logistic 
+          regression to see what causes/correlates unknown contact.
+          
+
+
+# Model
+
+# Discussion
+
+# Conclusion
+
+# Appendix
+
+# Extra plot, not needed
+```{r}
+library(VIM)
+library(mice)
+Practicum_2_aggr = aggr(P2, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=names(P2), cex.axis=.7, gap=1, ylab=c("Proportion of missingness","Missingness Pattern")) #check proportin of missingness and missing patterns, begin_weight has the most missing values
+cbind(P2$loan, P2$balance)
+```
