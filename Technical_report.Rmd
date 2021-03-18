@@ -264,12 +264,11 @@ write.csv(P2.final,"P2.csv", row.names = FALSE)
 ```{r, echo=FALSE}
 library(VIM)
 library(mice)
-<<<<<<< HEAD
+
 setwd("~/Documents/IU-2020-2021/Spring-2021/Consulting/Practicum2")
 P2<-read.csv("~/Documents/IU-2020-2021/Spring-2021/Consulting/Practicum2")
-=======
+
 P2<-read.csv("P2.csv")
->>>>>>> a43e8e270be02b54e2796c9a4fc442146ab47a52
 P2$job<-factor(P2$job)  #converting factor variables into factors
 P2$marital<-factor(P2$marital)
 P2$education<-factor(P2$education)
@@ -282,11 +281,8 @@ P2$y<-factor(P2$y)
 P2$balance<-ifelse(P2$loan=="No",0,P2$balance)
 
 #change unknown and blanks to NA's
-<<<<<<< HEAD
 dat2 <- read.csv("~/Documents/IU-2020-2021/Spring-2021/Consulting/Practicum2", header=T, na.strings=c(c("unknown", ""),"NA"))
-=======
 dat2 <- read.csv("P2.csv", header=T, na.strings=c(c("unknown", ""),"NA"))
->>>>>>> a43e8e270be02b54e2796c9a4fc442146ab47a52
 #dropping non-obs responses
 drop<-c("day", "month", "poutcome", "previous", "duration", "campaign", "pdays", "age", "balance", "price") #tracking our work, not necessarily relevant to our purposes.  I also removed variables which were complete.
 dat2<-dat2[,!(names(dat2) %in% drop)]
