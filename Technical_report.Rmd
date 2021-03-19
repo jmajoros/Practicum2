@@ -7,15 +7,29 @@ output: pdf_document
 
 # Abstract
 
+
+
 # Introduction
 
 Launching a new product is an expensive undertaking that a company enters into, understanding that risk is inherently involved.  However, equally understood is the need to mitigate the risk of incurring a loss. The difference between a bottom line that is in the red or in the black depends on the ability to make well-educated decisions based on quantifiable data, and an assessment of the potential risks and rewards for launching a given product. All of this hinges on having quality information that has been delivered in a manner that makes it intelligible.  
 
-We endeavor to render a detailed analysis of the proposed new product, the USB Toaster, based on the comprehensive data gathered by our firm. We plan to effectively communicate an examination of the data collected in both samples (below) and highlight which demographic data points may be of interest, and most importantly, to predict how successful the USB Toaster will be. 
+Here, we have rendered a detailed analysis of the proposed new product, the USB Toaster, based on the comprehensive data gathered by our firm. We have compiled an examination of the data collected in both samples and highlighted which demographic data points may be of interest, and most importantly, we predicted how successful the USB Toaster will be based on our comprehensive model. The processes of reaching these objectives will be detailed in sections covering the data, exploratory data analysis, and the model further on in this report.
 
 
-# Data
+# The Data
 
+## The Two Data Sources
+
+The data we have analyzed comes from two different sources, the client and the consulting firm. The data obtained by the client provides valuable information on demographics that may or may not have interest in purchasing the USB Toaster, although it is clearly not representative of the population. We found every variable in this dataset to be a large departure from the general population through additional research and contrasting it with the sample collected through the DOE designed experiment, which is though to represent the target market. In light of these discoveries, we focused our analysis on the data obtained by the consulting firm, which would provide more insight into the USB Toaster product market. The data collected through a random sample by the consulting firm proved to be representative of the test market population for the USB Toaster, seeing as this data sample was 100 times larger that that collected by the client. We therefore used this dataset to achieve our specific aims.
+
+## Examining Missing Data
+
+The original data obtained by the consulting firm included 45,211 observations of 11 potential variables of interest. There were a somewhat considerable amount of missing values in this dataset, therefore we tested these proportionally against the population to see if there were any significant differences. We found that there was no evidence that MOST missing values come from different distributions; we did find that missing values (labeled "unknown") for education level was statistically different from the population, although not meaningfully so. We also found that unknown contact method was strongly significantly different.***REMARK 
+We subsequently retained the missing/unknown values in this dataset in our analysis.
+
+## The Response Variable and Explanatory Variables
+
+To fulfill and achieve our specific aims, the primary outcome measure we decided to use is product response
 
 # formatting data and summary stats
 ```{r, echo=FALSE}
@@ -265,8 +279,8 @@ write.csv(P2.final,"P2.csv", row.names = FALSE)
 library(VIM)
 library(mice)
 
-setwd("~/Documents/IU-2020-2021/Spring-2021/Consulting/Practicum2")
-P2<-read.csv("~/Documents/IU-2020-2021/Spring-2021/Consulting/Practicum2")
+#setwd("~/Documents/IU-2020-2021/Spring-2021/Consulting/Practicum2")
+#P2<-read.csv("~/Documents/IU-2020-2021/Spring-2021/Consulting/Practicum2")
 
 P2<-read.csv("P2.csv")
 P2$job<-factor(P2$job)  #converting factor variables into factors
@@ -281,7 +295,7 @@ P2$y<-factor(P2$y)
 P2$balance<-ifelse(P2$loan=="No",0,P2$balance)
 
 #change unknown and blanks to NA's
-dat2 <- read.csv("~/Documents/IU-2020-2021/Spring-2021/Consulting/Practicum2", header=T, na.strings=c(c("unknown", ""),"NA"))
+#dat2 <- read.csv("~/Documents/IU-2020-2021/Spring-2021/Consulting/Practicum2", header=T, na.strings=c(c("unknown", ""),"NA"))
 dat2 <- read.csv("P2.csv", header=T, na.strings=c(c("unknown", ""),"NA"))
 #dropping non-obs responses
 drop<-c("day", "month", "poutcome", "previous", "duration", "campaign", "pdays", "age", "balance", "price") #tracking our work, not necessarily relevant to our purposes.  I also removed variables which were complete.
