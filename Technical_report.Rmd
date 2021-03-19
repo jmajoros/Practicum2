@@ -1095,9 +1095,6 @@ Practicum_2_aggr = aggr(dat3, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=
           regression to see what causes/correlates unknown contact.
           
 
-
-# Model
-
 # Discussion
 
 # Conclusion
