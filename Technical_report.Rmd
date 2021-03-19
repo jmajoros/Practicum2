@@ -27,9 +27,6 @@ The data we have analyzed comes from two different sources, the client and the c
 The original data obtained by the consulting firm included 45,211 observations of 11 potential variables of interest. There were a somewhat considerable amount of missing values in this dataset, therefore we tested these proportionally against the population to see if there were any significant differences. We found that there was no evidence that MOST missing values come from different distributions; we did find that missing values (labeled "unknown") for education level was statistically different from the population, although not meaningfully so. We also found that unknown contact method was strongly significantly different.***REMARK 
 We subsequently retained the missing/unknown values in this dataset in our analysis.
 
-## The Response Variable and Explanatory Variables
-
-To fulfill and achieve our specific aims, the primary outcome measure we decided to use is product response
 
 # formatting data and summary stats
 ```{r, echo=FALSE}
@@ -926,7 +923,7 @@ Done above.
 The final models of both methods described above will be interpreted to determine any useful demographic data that may be used to maximize profit by targeted marketing.  In the case of a probable loss in section SA2, this may allow for stronger profit potential based on focusing on the demographics identified in the models that are positively associated with intent to purchase.
 
 ```{r, echo=FALSE}
-sumary(m3)  #we see student/retired, tertiary, divorced/single, no house
+sumary(m3.3)  #we see student/retired, tertiary, divorced/single, no house
 #we can interpret these, but I don't think it is necessary
 #these are all in line with the cts
 # we can use the general direction and size from logistic regression, but with specific % from cts to discuss
