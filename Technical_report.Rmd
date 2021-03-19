@@ -7,11 +7,11 @@ output: pdf_document
 
 # Abstract
 
-
+The purpose of this report is to use confidence intervals, logistic regression, as well as analysis of contingency tables in order to find the likelihood that the USB Toaster will be a successful product, useful demographic points to aid in formulating a successful marketing campaign, and potential profit or loss. By calculating confidence intervals, we found that 95% of the time, the true probability of the USB Toaster being profitable falls between 0.118 and 0.124. In our logistic regression model, our final model included a binary response variable for product response (yes or no) and explanatory variables education, job, age, balance, housing, loan, default, contact, and marital status. We fit this model on a training set of data taken from the dataset provided by the consulting firm. We found the correct classification rate for the training data set to be 88.2%. Using contingency tables and the logistic regression model, we found the estimated profit of the USB Toaster to be between 708,470z and 1,570,662z where z is fixed price - fixed cost.
 
 # Introduction
 
-Launching a new product is an expensive undertaking that a company enters into, understanding that risk is inherently involved.  However, equally understood is the need to mitigate the risk of incurring a loss. The difference between a bottom line that is in the red or in the black depends on the ability to make well-educated decisions based on quantifiable data, and an assessment of the potential risks and rewards for launching a given product. All of this hinges on having quality information that has been delivered in a manner that makes it intelligible.  
+Launching a new product is an expensive undertaking that a company enters into, understanding that risk is inherently involved. However, equally understood is the need to mitigate the risk of incurring a loss. The difference between a bottom line that is in the red or in the black depends on the ability to make well-educated decisions based on quantifiable data, and an assessment of the potential risks and rewards for launching a given product. All of this hinges on having quality information that has been delivered in a manner that makes it intelligible.  
 
 Here, we have rendered a detailed analysis of the proposed new product, the USB Toaster, based on the comprehensive data gathered by our firm. We have compiled an examination of the data collected in both samples and highlighted which demographic data points may be of interest, and most importantly, we predicted how successful the USB Toaster will be based on our comprehensive model. The processes of reaching these objectives will be detailed in sections covering the data, exploratory data analysis, and the model further on in this report.
 
@@ -24,8 +24,7 @@ The data we have analyzed comes from two different sources, the client and the c
 
 ## Examining Missing Data
 
-The original data obtained by the consulting firm included 45,211 observations of 11 potential variables of interest. There were a somewhat considerable amount of missing values in this dataset, therefore we tested these proportionally against the population to see if there were any significant differences. We found that there was no evidence that MOST missing values come from different distributions; we did find that missing values (labeled "unknown") for education level was statistically different from the population, although not meaningfully so. We also found that unknown contact method was strongly significantly different.***REMARK 
-We subsequently retained the missing/unknown values in this dataset in our analysis.
+The original data obtained by the consulting firm included 45,211 observations of 11 potential variables of interest. There were a somewhat considerable amount of missing values in this dataset, therefore we tested these proportionally against the population to see if there were any significant differences. We found that there was no evidence that MOST missing values come from different distributions; we did find that missing values (labeled "unknown") for education level was statistically different from the population, although not meaningfully so. We also found that unknown contact method was strongly significantly different. We subsequently retained the missing/unknown values in this dataset in our analysis.
 
 
 # formatting data and summary stats
@@ -1038,7 +1037,7 @@ Lower bound of profit:
 18900000*(0.2787852-0.2413)
 ```
 
-$708,470*z
+$708,470*z 
 
 Upper bound of profit:
 ```{r}
