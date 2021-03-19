@@ -225,9 +225,8 @@ summary(P2.unk.c)
 prop.test(x=c(530,5289), n=c(530+12478, 45211),
           conf.level=0.95)
 ```
-#There is no evidence that MOST missing values come from different distributions.
-There is evidence that "unknown" as an education level is statistically different, but not meaningfully so.
-There is very strong evidence that contact method unknown is different.  
+# There is no evidence that MOST missing values come from different distributions.
+*There is evidence that "unknown" as an education level is statistically different, but not meaningfully so. There is very strong evidence that contact method unknown is different.*
 
 # Imputing final data set
 ```{r, echo=FALSE}
@@ -254,7 +253,7 @@ prop.test(x=c(389,5289), n=c(389+2515, 45211),
           conf.level=0.95)
 ```
 #^^^ Every factor level of contact is significantly different from the standard pop.  
-So weird.  Basically, unknown is the biggest issue and it is totally different from tele and cell.  
+*So weird.  Basically, unknown is the biggest issue and it is totally different from tele and cell.*
 
 ```{r, echo=FALSE}
 drop<-c("day", "month", "poutcome") #tracking our work, not necessarily relevant to our purposes.
@@ -265,8 +264,6 @@ summary(P2.final)
 ```{r, echo=FALSE}
 write.csv(P2.final,"P2.csv", row.names = FALSE)
 ```
-
-
 
 
 # EDA
@@ -317,7 +314,7 @@ summary(dat4)
 #still can't figure out why y is so strange on contact...
 ```
 
-Contact behaves strangely missing nearly 4 times as much data as the next variable, but being the only one for which the level of unknown was truly significantly different.  Based on knowing that unknown contact is very different from other values, we might infer that people that say "no" are more likely to also not tell us their mode of contact - probably not the reverse.  We might also guess that contact is among the last pieces of info asked and people may have tired of answering at this point.  Essentially, people that are more willing to answer all or most of the questions, are more likely to say yes...but this doesn't really seem to add up either.  We may just need to say it is not understood, but there is a connection and it could be explored further in the future if the client is interested.
+Contact behaves strangely missing nearly 4 times as much data as the next variable, but being the only one for which the level of unknown was truly significantly different.  Based on knowing that unknown contact is very different from other values, we might infer that people that say "no" are more likely to also not tell us their mode of contact - probably not the reverse.  We might also guess that contact is among the last pieces of info asked and people may have tired of answering towards the end.  *Essentially, people that are more willing to answer all or most of the questions, are more likely to say yes...but this doesn't really seem to add up either.  We may just need to say it is not understood, but there is a connection and it could be explored further in the future if the client is interested.*
 
 # Univriate EDA and Bivariate EDA 
 ```{r, echo=FALSE}
@@ -417,27 +414,7 @@ This gets to measure accuracy which we will talk about below in the psychometric
 ## 1.3  
 Based on the results of the above analyses, we will determine how and some potential reasons why the dataset are different (if we find they are) using both statistical reasoning and potentially some psychometric theory and research.
 
-We can talk about my above notes here.  Sampling error skewing the population.  Also sources of error on psychological tests (intent to buy) time differences, personal variation, task not reflective of event.  More on this last one, research indicates surveys and focus groups aren't great barometers for purchasing.  A potential better metric will be discussed later, but we will move forward with the data we have.
-
-
-### (Rough Draft of some text below. This might be better as part of the conclusion and suggesting a different approach to future research in this area.)
-
-It has been noted that surveys asking if people will hypothetically buy a product with money they may not have, is not necessarily a good measure for intent to buy.  In researching the viability of this measure, our consulting team found a particular source of interest that specifically investigated durable homewares as part of its data.  According to research published in the Journal of the American Statistical Association by F. Thomas Juster, "consumer intentions to buy are inefficient predictors of purchase rates because they do not provide accurate estimates of mean purchase probability." (hyperlink: https://www.tandfonline.com/doi/abs/10.1080/01621459.1966.10480897) 
-
-The reasons for this may be rooted in the fact that measuring an intent to purchase is a psychological construct and these measures have commonly known sources of unreliability*, all of which apply in this context.  The three common sources of performance variation are:
-1) The person tested may change from one testing to the next
-2) The task measured and the behavior may be different
-3) The limited sample of the behavior results in an unstable and undependable score.
-
-While it is not the intent to delve deeply into psychometrics, a brief aside exploring the potential reliability of the product intent variable in the context of the research above might be fruitful for understanding the task at hand of examining the probability of product success.
-
-  In the article by Juster, the predominant source of error cited that made customer buying intentions problematic.  As Juster puts it, "intentions surveys cannot detect movements in mean probability among nonin- tenders, who account for the bulk of actual purchases and for most of the time-series variance in purchase rates." Meaning that though our data gives a "yes" or "no" response, the reality of the situation is different.  This gets at the heart of each of the above sources of unreliability.
-  First, there is personal variation over time, whether through change in the person or the context of the persons life.  Second, there is a difference in task - what we really want is the probability of a purchase, but the data forces a binary situation on the individuals.  Finally, for each individual we have only one measure, which is not the most reliable measure.
-  Juster's article finds that having individuals rate the probability they will purchase a product is a better measure of predictability.    While this does not completely fix any of the problems noted above, it allows for a better representation of the uncertainty in an individuals choice and thus makes for a better measure.
-
-Footnote
-$_{\textrm{*Thorndike and Thorndike-Christ, (2010).  Measurement and Evaluation in Psychology and Education (8th Ed.). Pearson}}$
-
+*We can talk about my above notes here.  Sampling error skewing the population.  Also sources of error on psychological tests (intent to buy) time differences, personal variation, task not reflective of event.  More on this last one, research indicates surveys and focus groups aren't great barometers for purchasing.  A potential better metric will be discussed later, but we will move forward with the data we have.*
 
 ## 1.4  
 After viewing the results of the analyses above, we will determine how to proceed with each dataset in the subsequent specific aims.
@@ -527,7 +504,7 @@ qbeta(c(0.025, 0.975),212+5289, 209+39922) # 95% of the time, we would expect th
 qbeta(c(0.005, 0.995),212+5289, 209+39922) # 99% of the time, we would expect the true mean would fall in this interval
 qbeta(c(0.0005, 0.9995),212+5289, 209+39922) # 999 out of 1000 times, we would expect the true mean would fall in this interval
 ```
-Discuss the potential means here and meaning of Bayesian estimation of the mean.
+*Discuss the potential means here and meaning of Bayesian estimation of the mean.*
 	
 ## 2.3  
 Using the calculated confidence intervals, we will determine the probability that the USB Toaster will be profitable.
@@ -535,7 +512,7 @@ Using the calculated confidence intervals, we will determine the probability tha
 ```{r}
 1-pbeta(.2413, 212+5289, 209+39922)
 ```
-Essentially a 0% chance with the target market.  Hope is not lost, better targeting and price raising might lead to a profit.
+There is essentially a 0% chance with the target market.  Through further analysis, better targeting, and price raising might lead to a profit, there is a chance this will increase. 
 
 # Specific Aim 3: What are some useful demographic data points that might help inform a potential marketing campaign?
 
@@ -608,10 +585,10 @@ c(hlstat, nrow(hldf))
 #Not a good fit...
 sumary(m1.final)
 ```
-Our model is not a good fit via the Hosmer-Lemeshow statistic for Goodness-of-fit used for binary logistic regressions.  Comments on plot above.
+Our model is not a good fit via the Hosmer-Lemeshow statistic for Goodness-of-fit used for binary logistic regressions. Figure X demonstrates the model's fit, where the values of the predicted probabilities align with the observed values. The farther from the line the points are, the worse the fit. The data points have 95% confidence intervals reflected in the lines, where most points at least fall in the 95% interval. 
 
 
-3.2  Diagnostic analysis will be performed to check the assumptions of the logistic model using residual plots, halfnorm plots and other relevant tests. Potential outliers or influential points will be examined with caution.
+# 3.2  Diagnostic analysis will be performed to check the assumptions of the logistic model using residual plots, halfnorm plots and other relevant tests. Potential outliers or influential points will be examined with caution.
 
 
 ```{r, echo=FALSE}
@@ -632,13 +609,13 @@ head(train$age.f)
 levels(train$age.f) <- list("65 years and up"=c("95 and up","85 to 94 years","75 to 84 years","65 to 74 years"), "55 to 64 years"="55 to 64 years","45 to 54 years"="45 to 54 years","35 to 44 years"="35 to 44 years",
     "25 to 34 years"="25 to 34 years", "younger than 24 years"="younger than 24 years")
 ```
-So you can see my notes and some plots above, I suspect this curvature is due to the behaviour of age - which is pretty crazy.  Even though there is slight curvature, the residuals are not very big - if anyone has any ideas to improve this, go for it!
+*So you can see my notes and some plots above, I suspect this curvature is due to the behaviour of age - which is pretty crazy.  Even though there is slight curvature, the residuals are not very big - if anyone has any ideas to improve this, go for it!*
 
-Balance has big residuals because of the binary behavior.  Doesn't look great for the model though...maybe we should take it out for violating assumptions.  Probably should do that....
+*Balance has big residuals because of the binary behavior.  Doesn't look great for the model though...maybe we should take it out for violating assumptions.  Probably should do that....*
 
 
-I tried other models to see if I could get rid of curvature.  No luck.
-However, the new model with age as factor by decade...does at least fit the data, though it is approaching bad fit....
+*I tried other models to see if I could get rid of curvature.  No luck.*
+*However, the new model with age as factor by decade...does at least fit the data, though it is approaching bad fit....*
 ```{r, echo=FALSE}
 summary(train)
 #New model with age as factor...
@@ -694,9 +671,9 @@ c(hlstat, nrow(hldf))
 m.final<-m1
 ```
 
-So you can see my notes and some plots below, I suspect this slight curvature is due to the behavior of balance2 (abs val of balance to fix inconsistencies in recording).  Even though there is slight curvature, the residuals are not very big - if anyone has any ideas to improve this, go for it!  Maybe we even take out balance and see how it performs?
+*So you can see my notes and some plots below, I suspect this slight curvature is due to the behavior of balance2 (abs val of balance to fix inconsistencies in recording).  Even though there is slight curvature, the residuals are not very big - if anyone has any ideas to improve this, go for it!  Maybe we even take out balance and see how it performs?*
 
-Note:  Someone can perform on test dataset to see if the model fits well, but given bad prediction, maybe we don't need to...we can just get general behaviors from the coefficients of this model.
+*Note:  Someone can perform on test dataset to see if the model fits well, but given bad prediction, maybe we don't need to...we can just get general behaviors from the coefficients of this model.*
 
 
 ```{r, echo=FALSE}
@@ -801,41 +778,41 @@ c(hlstat, nrow(hldf))
 Try again will box-cox transformation for balance...Nope
 
 ```{r, echo=FALSE}
-train_b$balance<-train$balance2^0.17
-m0<-glm(y.n~1, family=binomial, train_b)
-m1<-glm(y.n~education+job+age.f+balance+housing+loan+default+contact+marital, family=binomial, train_b) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
-#(also the model didn't converge with price)
-sumary(m1)
-
-#model selection 
-#both direction stepwise starting with null
-m.sw1 = step(m0,
-            scope=list(lower=m0, upper=m1),
-            direction = "both", trace = F)
-m1<-m.sw1
-train<-train %>% 
-  mutate(p.hat=predict(m1, type="response"),
-         eta = predict(m1))
-
-
-hldf <- train %>% 
-  group_by(ntile(eta, 100)) %>%
-  summarise(y=sum(y=='ye'), ppred=mean(p.hat), count=n()) %>%
-  mutate(se.fit=sqrt(ppred*(1-ppred)/count))
-
-# Hosmer-Lemeshow statistic for Goodness-of-fit
-
-
-hlstat <- with(hldf, 
-               sum((y-count*ppred)^2/(count*ppred*(1-ppred)))
-               )
-c(hlstat, nrow(hldf))
-1-pchisq(hlstat, nrow(hldf)-2) #Not good fit.  
+# train_b$balance<-train$balance2^0.17
+# m0<-glm(y.n~1, family=binomial, train_b)
+# m1<-glm(y.n~education+job+age.f+balance+housing+loan+default+contact+marital, family=binomial, train_b) #removed price because it is only off interest later.  Removed loan for reasons stated above, and balance because balance2 is thought to be better measure (no negatives)
+# #(also the model didn't converge with price)
+# sumary(m1)
+# 
+# #model selection 
+# #both direction stepwise starting with null
+# m.sw1 = step(m0,
+#             scope=list(lower=m0, upper=m1),
+#             direction = "both", trace = F)
+# m1<-m.sw1
+# train<-train %>% 
+#   mutate(p.hat=predict(m1, type="response"),
+#          eta = predict(m1))
+# 
+# 
+# hldf <- train %>% 
+#   group_by(ntile(eta, 100)) %>%
+#   summarise(y=sum(y=='ye'), ppred=mean(p.hat), count=n()) %>%
+#   mutate(se.fit=sqrt(ppred*(1-ppred)/count))
+# 
+# # Hosmer-Lemeshow statistic for Goodness-of-fit
+# 
+# 
+# hlstat <- with(hldf, 
+#                sum((y-count*ppred)^2/(count*ppred*(1-ppred)))
+#                )
+# c(hlstat, nrow(hldf))
+# 1-pchisq(hlstat, nrow(hldf)-2) #Not good fit.  
 #Null is that it fits, so we would reject this.
 ```
 
 
-3.3 Tests will be conducted to see the accuracy of the model (correct classification rate) with respect to correctly identifying whether an individual will or will not purchase the product based on the other variables in the model using the test set (the data not used in the training set).
+# 3.3 Tests will be conducted to see the accuracy of the model (correct classification rate) with respect to correctly identifying whether an individual will or will not purchase the product based on the other variables in the model using the test set (the data not used in the training set).
 
 ```{r, echo=FALSE}
 summary(train)
@@ -863,7 +840,7 @@ abline(0,1,lty=2)
 #Clearly not a great model, but not too uncommon with binary - main thing is we have coefficients that describe general behavior now.
 ```
 
-Not great at predicting...Specificity is good (red - % of time correctly classifying "no"), sensitivity is terrible (black - % of time correctly classifying "yes"). So we know some things that make people more likely to buy, but don't have a great model.  Perhaps contingency tables will be better....we could still see how it performs on the test set or just use the full set above.  (Good verbiage borrowed/altered from a text: Almost no cases are classified as "yes" because the probability of "no" always dominates the outcome. so the performance is not what we would like, but not surprising given the large proportion of "no" in each category.)
+The model is not great at predicting. Specificity is good (red - % of time correctly classifying "no"), sensitivity is terrible (black - % of time correctly classifying "yes"). *We understand some things that make people more likely to buy, but don't have a great model.  Perhaps contingency tables will be better....we could still see how it performs on the test set or just use the full set above.  (Good verbiage borrowed/altered from a text: Almost no cases are classified as "yes" because the probability of "no" always dominates the outcome. so the performance is not what we would like, but not surprising given the large proportion of "no" in each category.)*
 
 
 ## 3.4  
@@ -915,7 +892,7 @@ str(P2)
 ```
 
 
-3.5  The contingency tables generated will be analyzed further to determine if specific variables are independent of others or have a relationship.  These results may allow the consultants to modify certain variables to be more descriptive and explanatory within the dataset.  This will potentially illuminate some variable relationships further (such as marital status and education’s combined effect on intent to purchase).
+# 3.5  The contingency tables generated will be analyzed further to determine if specific variables are independent of others or have a relationship.  These results may allow the consultants to modify certain variables to be more descriptive and explanatory within the dataset.  This will potentially illuminate some variable relationships further (such as marital status and education’s combined effect on intent to purchase).
 
 Done above.
 
@@ -973,11 +950,12 @@ lines(density(P2.y$price), col="blue", add=T)
 mean(P2.y$price) #mean estimated price for total pop of yeses
 mean(Prime$price) # mean estimated price for student pop of yeses
 ```
-So, it looks like we have a specific target market that this product *could* work for.  But the question is really if targeting colleges can achieve a high enough population to match the 5 major metros originally intended and will it change the costs (and effectively the breakeven point)?  This is something the client must answer, but IF they still want to move forward with the USB Toaster, we've given them a clear path where they could even have college logos on the outside of the toasters.
+*So, it looks like we have a specific target market that this product *could* work for. But the question is really if targeting colleges can achieve a high enough population to match the 5 major metros originally intended and will it change the costs (and effectively the breakeven point)? This is something the client must answer, but IF they still want to move forward with the USB Toaster, we've given them a clear path where they could even have college logos on the outside of the toasters.*
 
-We can also see that students who said they would buy the product expect to pay about $28 more than the population of yeses on the whole (yeses there were higher than no's as well).  So it could justify raising the sale price which *may* make achieving a profit more likely.
+*We can also see that students who said they would buy the product expect to pay about $28 more than the population of yeses on the whole (yeses there were higher than no's as well).  So it could justify raising the sale price which *may* make achieving a profit more likely.*
 
-#New logistic model based on this subpop.  Not good, so we can stick with the previous model for inference and the contingency tables above.
+#New logistic model based on this subpop.  Not good, so we can stick with the previous model for inference and the contingency tables above. 
+- I think its ok to stick with the previous model and contigency tables above
 ```{r, echo=FALSE}
 m0<-glm(y.n~1, family=binomial, Prime)
 m1<-glm(y.n~education+age.f+balance2+housing+default+contact+marital, family=binomial, Prime)
@@ -1029,8 +1007,6 @@ c(hlstat, nrow(hldf))
 ```
 
 
-
-
 # Specific Aim 4:  What does the data tell us in terms of potential profit or loss based on the outcome of the analysis?
 
 ## 4.1  
@@ -1048,16 +1024,12 @@ The pricing estimation information we've included may give additional insight in
 Recent estimates put the college population (hyperlink: https://www.census.gov/newsroom/press-releases/2019/school-enrollment.html) of the US at 18.9 million, while the five major metropolitan markets (NYC, LA, Chicago, Houston, and Pheonix - https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population) are estimated to have a combined population of 19 million.  Thus, we have good news for our client since these populations are roughly the same size and we have a larger than needed positive response rate to make the USB Toaster a profitable product.  Additionally, we can potentially regard the student population as larger given the metropolitan markets contain children that will not be part of the target market, whereas all college students are of an age to buy the USB Toaster.  This result does assume that this doesn't change the cost per item or the solicitation costs however, so the client is encouraged to use the models above to see if the USB Toaster remains profitable under a change in these assumptions.  The client is also more than welcome to contact our team to run additional models or calculations.  
 
 
-
 ```{r}
 8336817+3979576+2693976+2320268+1680993 #five metro pops combined
 ```
 
 
-
-
-
-4.2  We will look at the results of the previous analyses within the context of this model to give an estimate of the actual profit or loss given by variables noted in 4.1 and the product response confidence interval from SA2.
+# 4.2  We will look at the results of the previous analyses within the context of this model to give an estimate of the actual profit or loss given by variables noted in 4.1 and the product response confidence interval from SA2.
 
 Using the credible interval of product sales from the student only population we will provide the calculation the 95% credible interval of profit or loss.
 
@@ -1074,16 +1046,14 @@ Upper bound of profit:
 ```
 $1,570,662*z
 
-Maybe this is enough....?  I think I've addressed some of what is below already and we cannot know if an increase or decrease in price would change an individuals intent to purchase, so this should be a consideration on the part of the client when considering their current price and a change.  We suggest consulting us further with the proprietary price so that we might analyze potential effects of a different price after looking through the data with a particular focus on the density of the estimated sales prices.
+*Maybe this is enough....?  I think I've addressed some of what is below already and we cannot know if an increase or decrease in price would change an individuals intent to purchase, so this should be a consideration on the part of the client when considering their current price and a change.  We suggest consulting us further with the proprietary price so that we might analyze potential effects of a different price after looking through the data with a particular focus on the density of the estimated sales prices.*
+- I think this is enough, we can discuss it as a client's method of considering price
 
-
-
-
-4.3  For respondents that indicate they would buy the USB Toaster we will determine the price range that was suitable for this population.  While the price is proprietary, this knowledge may inform the client as to whether or not the current estimated fixed price is appropriate or whether it might be increased.
+# 4.3  For respondents that indicate they would buy the USB Toaster we will determine the price range that was suitable for this population.  While the price is proprietary, this knowledge may inform the client as to whether or not the current estimated fixed price is appropriate or whether it might be increased.
 
  ...
 
-4.4  Finally, we will look at variations in the model based on increasing the price of the USB Toaster in terms of the specified variables above.  Note, since these values are proprietary, the results of these analyses will be in terms of the variables and dollars.  The client may then use these calculations to determine the actual dollar profit or loss by entering different values of the variables (where appropriate into the equation).
+# 4.4  Finally, we will look at variations in the model based on increasing the price of the USB Toaster in terms of the specified variables above.  Note, since these values are proprietary, the results of these analyses will be in terms of the variables and dollars.  The client may then use these calculations to determine the actual dollar profit or loss by entering different values of the variables (where appropriate into the equation).
 
 ```{r}
 dat3 <- read.csv("~/Documents/IU-2020-2021/Spring-2021/Consulting/Practicum2", header=T, na.strings=c(c("unknown", ""),"NA"))
@@ -1095,9 +1065,26 @@ Practicum_2_aggr = aggr(dat3, col=mdc(1:2), numbers=TRUE, sortVars=TRUE, labels=
           regression to see what causes/correlates unknown contact.
           
 
-# Discussion
-
 # Conclusion
+
+It has been noted that surveys asking if people will hypothetically buy a product with money they may not have, is not necessarily a good measure for intent to buy.  In researching the viability of this measure, our consulting team found a particular source of interest that specifically investigated durable homewares as part of its data.  According to research published in the Journal of the American Statistical Association by F. Thomas Juster, "consumer intentions to buy are inefficient predictors of purchase rates because they do not provide accurate estimates of mean purchase probability." (hyperlink: https://www.tandfonline.com/doi/abs/10.1080/01621459.1966.10480897) 
+
+The reasons for this may be rooted in the fact that measuring an intent to purchase is a psychological construct and these measures have commonly known sources of unreliability*, all of which apply in this context.  The three common sources of performance variation are:
+1) The person tested may change from one testing to the next
+2) The task measured and the behavior may be different
+3) The limited sample of the behavior results in an unstable and undependable score.
+
+While it is not the intent to delve deeply into psychometrics, a brief aside exploring the potential reliability of the product intent variable in the context of the research above might be fruitful for understanding the task at hand of examining the probability of product success.
+
+  In the article by Juster, the predominant source of error cited that made customer buying intentions problematic.  As Juster puts it, "intentions surveys cannot detect movements in mean probability among non-intenders, who account for the bulk of actual purchases and for most of the time-series variance in purchase rates." Meaning that though our data gives a "yes" or "no" response, the reality of the situation is different. This gets at the heart of each of the above sources of unreliability. 
+  
+  First, there is personal variation over time, whether through change in the person or the context of the persons life. Second, there is a difference in task - what we really want is the probability of a purchase, but the data forces a binary situation on the individuals.  Finally, for each individual we have only one measure, which is not the most reliable measure.
+  
+  Juster's article finds that having individuals rate the probability they will purchase a product is a better measure of predictability. While this does not completely fix any of the problems noted above, it allows for a better representation of the uncertainty in an individuals choice and thus makes for a better measure. In future steps, it would be helpful to change the metric of the survey to be probabilistic to create a better understanding of an individual's intent.
+
+Footnote
+$_{\textrm{*Thorndike and Thorndike-Christ, (2010).  Measurement and Evaluation in Psychology and Education (8th Ed.). Pearson}}$
+
 
 # Appendix
 
